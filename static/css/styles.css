@@ -1,0 +1,1434 @@
+/* =========================================================
+   AgileFlow - Design System & Modern Aesthetics
+   FIT2101 - Project Pulse
+   ========================================================= */
+
+:root {
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #eff6ff;
+    --sidebar-bg: #eaecf0;
+    --sidebar-border: #d0d5dd;
+    --card-bg: #ffffff;
+    --dark-tag-bg: #344054;
+    --priority-low-bg: #bbf7d0;
+    --priority-low-text: #14532d;
+    --priority-medium-bg: #fef08a;
+    --priority-medium-text: #713f12;
+    --priority-important-bg: #fed7aa;
+    --priority-important-text: #7c2d12;
+    --priority-urgent-bg: #ef4444;
+    --priority-urgent-text: #ffffff;
+    --story-point-bg: #101828;
+    --story-point-text: #ffffff;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1f2937;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, .brand-title {
+    font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+/* App Navbar */
+.app-navbar {
+    background-color: #e0f2fe;
+    border-bottom: 1px solid #bae6fd;
+}
+
+.window-decorations .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-close { background-color: #ef4444; }
+.dot-minimize { background-color: #f59e0b; }
+.dot-expand { background-color: #10b981; }
+
+.user-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+.fs-7 { font-size: 0.85rem; }
+.fs-8 { font-size: 0.75rem; }
+
+/* Layout Grid */
+.backlog-layout {
+    display: flex;
+    gap: 1.5rem;
+    min-height: calc(100vh - 90px);
+}
+
+/* Sidebar Styling */
+.sprints-sidebar {
+    width: 290px;
+    min-width: 280px;
+    background-color: var(--sidebar-bg);
+    border: 1px solid var(--sidebar-border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    height: fit-content;
+}
+
+.sidebar-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.15rem;
+}
+
+.sidebar-subtitle {
+    font-size: 0.82rem;
+    color: #4b5563;
+    margin-bottom: 1.25rem;
+}
+
+.sprint-item-card {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.sprint-item-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border-color: #9ca3af;
+}
+
+.sprint-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1f2937;
+}
+
+/* Sprint Badges */
+.badge-sprint-completed {
+    background-color: #22c55e;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-sprint-active {
+    background-color: #f59e0b;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-sprint-planning {
+    background-color: #6b7280;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+}
+
+.btn-add-sprint {
+    background-color: #ffffff;
+    border: 1.5px solid #9ca3af;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    padding: 0.55rem 1rem;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+.btn-add-sprint:hover {
+    background-color: #f3f4f6;
+    border-color: #6b7280;
+}
+
+/* Sticky Rule Alert Card */
+.sticky-note {
+    background-color: #fef08a;
+    border-left: 4px solid #eab308;
+    color: #713f12;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+/* Main Backlog Workspace */
+.backlog-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.backlog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.backlog-title {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+/* Controls Bar */
+.controls-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.sort-select {
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.45rem 1.8rem 0.45rem 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #1f2937;
+    background-color: #ffffff;
+}
+
+.filter-btn {
+    background-color: #ffffff;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #1f2937;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background-color: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+/* Backlog List Table Header */
+.backlog-list-header {
+    display: grid;
+    grid-template-columns: 1fr 180px 140px 100px;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #374151;
+    align-items: center;
+}
+
+/* Compact backlog list rows */
+.backlog-task-row {
+    display: grid;
+    grid-template-columns: 1fr 180px 140px 100px;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    align-items: stretch;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.backlog-task-row:hover {
+    transform: none;
+}
+
+.task-name-box {
+    background: #ffffff;
+    border: 1.5px solid #374151;
+    border-radius: 6px;
+    padding: 0.35rem 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 40px;
+}
+
+.task-title-text {
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+    font-weight: 600;
+    color: #111827;
+}
+
+.tags-box {
+    background: var(--dark-tag-bg);
+    color: #ffffff;
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    text-align: center;
+    min-height: 40px;
+}
+
+.priority-box {
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-align: center;
+    min-height: 40px;
+}
+
+/* Priority Color Mapping per Client Requirement */
+.priority-box.low {
+    background-color: #a3e635; /* Vibrant Green */
+    color: #14532d;
+}
+
+.priority-box.medium {
+    background-color: #facc15; /* Yellow/Orange */
+    color: #713f12;
+}
+
+.priority-box.important {
+    background-color: #fb923c; /* Orange */
+    color: #7c2d12;
+}
+
+.priority-box.urgent {
+    background-color: #ef4444; /* Bright Red */
+    color: #ffffff;
+}
+
+.story-points-box {
+    background: var(--story-point-bg);
+    color: var(--story-point-text);
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    min-height: 40px;
+}
+
+/* Bottom Action Bar */
+.backlog-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-create-task {
+    background: #ffffff;
+    border: 2px solid #111827;
+    color: #111827;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 0.65rem 1.75rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-create-task:hover {
+    background: #111827;
+    color: #ffffff;
+}
+
+/* Card View Layout */
+#cardViewContainer {
+    display: none;
+}
+
+.card-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.task-card {
+    border-radius: 12px;
+    padding: 1.25rem 1.4rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.75;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.13);
+}
+
+/* Card Header: type badge + story points badge */
+.task-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Story / Bug type badge */
+.task-card-type-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    letter-spacing: 0.3px;
+}
+
+.task-card-type-story {
+    background-color: rgba(37, 99, 235, 0.18);
+    color: #1e3a8a;
+}
+
+.task-card-type-bug {
+    background-color: rgba(220, 38, 38, 0.18);
+    color: #7f1d1d;
+}
+
+.task-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.task-card-points {
+    min-width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.18);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Semi-transparent divider */
+.task-card-divider {
+    height: 1px;
+    background-color: rgba(0,0,0,0.12);
+    margin-bottom: 0.75rem;
+}
+
+/* Tag pills */
+.task-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    min-height: 24px;
+}
+
+.task-card-tag {
+    background-color: rgba(0,0,0,0.15);
+    color: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+}
+
+.task-card-no-tag {
+    font-size: 0.78rem;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Footer priority strip */
+.task-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.task-card-priority-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    opacity: 0.75;
+}
+
+.task-card-assignee {
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background-color: rgba(0,0,0,0.12);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    opacity: 0.85;
+}
+
+/* Card priority colours : mirrors the existing priority colour system */
+.priority-card-low {
+    background-color: #a3e635;
+    color: #14532d;
+}
+
+.priority-card-medium {
+    background-color: #facc15;
+    color: #713f12;
+}
+
+.priority-card-important {
+    background-color: #fb923c;
+    color: #7c2d12;
+}
+
+.priority-card-urgent {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+/* View Toggle Switch */
+.view-toggle-wrapper {
+    user-select: none;
+}
+
+.view-toggle-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6b7280;
+    transition: color 0.2s ease;
+}
+
+.view-toggle-label.active {
+    color: #111827;
+}
+
+.view-toggle-switch {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    margin: 0;
+}
+
+.view-toggle-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.view-toggle-track {
+    display: block;
+    width: 46px;
+    height: 26px;
+    background-color: #d1d5db;
+    border-radius: 999px;
+    position: relative;
+    transition: background-color 0.25s ease;
+}
+
+.view-toggle-switch input:checked + .view-toggle-track {
+    background-color: #22c55e;
+}
+
+.view-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.25s ease;
+}
+
+.view-toggle-switch input:checked + .view-toggle-track .view-toggle-thumb {
+    transform: translateX(20px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .backlog-layout {
+        flex-direction: column;
+    }
+    .sprints-sidebar {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .backlog-list-header {
+        display: none;
+    }
+    .backlog-task-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 0.75rem;
+        border-radius: 8px;
+    }
+    .task-name-box {
+        border: none;
+        padding: 0.25rem 0;
+    }
+    .tags-box, .priority-box, .story-points-box {
+        min-height: 40px;
+        padding: 0.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* US-04 Create Product Backlog Task */
+
+.create-task-page {
+    max-width: 1040px;
+    padding-bottom: 3rem;
+}
+
+.back-link {
+    color: #475467;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: #2563eb;
+}
+
+.create-title {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.task-form-card {
+    background: white;
+    border: 1px solid #e4e7ec;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.form-section {
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid #eaecf0;
+}
+
+.form-section h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    color: #344054;
+    font-weight: 700;
+    margin-bottom: 0.55rem;
+}
+
+.form-label > span,
+legend.form-label > span {
+    color: #dc2626;
+}
+
+.form-label small {
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-left: 0.35rem;
+}
+
+.form-control,
+.form-select {
+    border-color: #d0d5dd;
+    min-height: 44px;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #84adff;
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.12);
+}
+
+.choice-grid > div {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.choice-grid-2 > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-grid-3 > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.choice-grid-4 > div {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.choice-grid > div > div label {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1.5px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tag-checkboxes > div {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+    gap: 0.5rem 1rem;
+}
+
+.tag-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 36px;
+    cursor: pointer;
+}
+
+.tag-checkboxes input[type="checkbox"] {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    accent-color: var(--sunset-orange, #2563eb);
+}
+
+.tag-checkboxes input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--sunset-orange, #2563eb);
+    outline-offset: 3px;
+}
+
+.choice-grid input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.choice-grid label:has(input:checked) {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #1d4ed8;
+    box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.tag-options label:has(input:checked) {
+    background: #344054;
+    border-color: #344054;
+    color: white;
+}
+
+.priority-options > div > div:nth-child(1)
+label:has(input:checked) {
+    background: #a3e635;
+    color: #14532d;
+}
+
+.priority-options > div > div:nth-child(2)
+label:has(input:checked) {
+    background: #facc15;
+    color: #713f12;
+}
+
+.priority-options > div > div:nth-child(3)
+label:has(input:checked) {
+    background: #fb923c;
+    color: #7c2d12;
+}
+
+.priority-options > div > div:nth-child(4)
+label:has(input:checked) {
+    background: #ef4444;
+    color: white;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.25rem 1.75rem;
+    background: #f9fafb;
+}
+
+.btn-create-submit {
+    background: #101828;
+    color: white;
+    font-weight: 700;
+    padding: 0.65rem 1.25rem;
+}
+
+.btn-create-submit:hover {
+    background: #1d4ed8;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .choice-grid-2 > div,
+    .choice-grid-3 > div,
+    .choice-grid-4 > div {
+        grid-template-columns: 1fr;
+    }
+
+    .form-section {
+        padding: 1.25rem;
+    }
+}
+
+/* =========================================================
+   Task Detail Page (task_detail.html)
+   ========================================================= */
+
+.detail-task-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* Two-panel layout */
+.detail-panels {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.detail-panel {
+    border: 1.5px solid #d1d5db;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    background: #ffffff;
+}
+
+.detail-panel-heading {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #111827;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-field {
+    font-size: 0.95rem;
+    color: #1f2937;
+    margin-bottom: 0.45rem;
+    line-height: 1.5;
+}
+
+.detail-label {
+    font-weight: 700;
+}
+
+/* History entries */
+.history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.9rem;
+}
+
+.history-entry:last-child {
+    border-bottom: none;
+}
+
+.history-timestamp {
+    color: #374151;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.history-description {
+    color: #6b7280;
+    text-align: right;
+}
+
+/* Detail page action buttons */
+.detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.btn-edit-task {
+    background: #ffffff;
+    border: 1.5px solid #374151;
+    color: #111827;
+    font-weight: 600;
+    padding: 0.55rem 1.4rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-task:hover {
+    background: #f3f4f6;
+}
+
+.btn-delete-task {
+    background: #dc2626;
+    border: 1.5px solid #dc2626;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.55rem 1.4rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-task:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+/* Clickable task rows and cards */
+.backlog-task-row {
+    cursor: pointer;
+}
+
+.task-card {
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .detail-panels {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   Midnight Sun: peach sunset, lilac water, lemon accents
+   Theme colours are centralized here; structural rules remain above.
+   ========================================================= */
+:root {
+    --sun-peach: #ffbe85;
+    --sun-coral: #ee928d;
+    --sun-lilac: #c5b5de;
+    --sun-lemon: #f4ed59;
+    --surface: #fffaf5;
+    --ink: #332744;
+    --muted: #66556f;
+    --accent: #754269;
+    --accent-hover: #59304f;
+    --line: #d7c3d5;
+    --primary-color: var(--accent);
+    --primary-dark: var(--accent-hover);
+    --primary-light: #f1e5f2;
+    --card-bg: var(--surface);
+    --dark-tag-bg: #eadcf1;
+    --story-point-bg: var(--sun-lemon);
+    --story-point-text: var(--ink);
+    --sunset-orange: var(--accent);
+}
+
+/* Background carries the colour; readable surfaces sit above it. */
+body.bg-light {
+    color: var(--ink);
+    background: #c5b5de !important;
+    background-image:
+        radial-gradient(ellipse at 12% 4%, #ffe8a3 0, transparent 38%),
+        radial-gradient(ellipse at 90% 30%, #ee929b 0, transparent 48%),
+        linear-gradient(170deg, #ffbe85 0%, #efa4a1 34%, #d0b0d4 65%, #aaa7d1 100%) !important;
+    background-attachment: fixed !important;
+}
+.main-wrapper {
+    min-height: calc(100vh - 80px);
+    background:
+        repeating-radial-gradient(ellipse at 10% 105%, transparent 0 65px,
+            rgba(255,255,255,.12) 67px 69px, transparent 72px 108px);
+    padding-bottom: 2rem;
+}
+
+/* Header: sunset hues with a high-contrast lemon brand badge. */
+.app-navbar {
+    background: linear-gradient(110deg, #ffd38a, #f3a08b 48%, #d9acd1);
+    border-bottom: 1px solid rgba(117,66,105,.28);
+    min-height: 80px;
+    box-shadow: 0 4px 20px rgba(78,43,77,.1) !important;
+}
+.app-navbar .navbar-brand {
+    color: var(--ink) !important;
+    background: var(--sun-lemon);
+    border-radius: 14px;
+    padding: .45rem .8rem;
+}
+.app-navbar .navbar-brand .text-primary { color: var(--ink) !important; }
+.window-decorations { display: none !important; }
+.app-navbar .bg-primary-subtle {
+    background: var(--surface) !important;
+    color: var(--accent) !important;
+    border-color: var(--line) !important;
+}
+
+/* Shared text and surfaces. */
+.backlog-title, .create-title, .detail-task-title,
+.task-title-text, .task-card-title, .form-section h2,
+.form-label, .detail-panel-heading, .detail-field { color: var(--ink); }
+.text-dark { color: var(--ink) !important; }
+.text-muted, .form-text, .form-label small,
+.history-description, .history-timestamp,
+.view-toggle-label, .backlog-list-header { color: var(--muted) !important; }
+.back-link { color: var(--accent); }
+.back-link:hover, .back-link:focus-visible { color: var(--accent-hover); text-decoration: underline; }
+.card, .task-form-card, .detail-panel, .login-card {
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(71,42,80,.08);
+}
+.backlog-header {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+.form-section, .detail-panel-heading, .history-entry { border-color: var(--line); }
+.form-actions { background: #f4e9f0; border-radius: 0 0 16px 16px; }
+
+/* Lists stay compact; card views use quiet surfaces and priority borders. */
+.task-name-box {
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    gap: .5rem;
+    min-width: 0;
+}
+.task-name-box > .d-flex { min-width: 0; }
+.task-name-box > .badge { white-space: normal; }
+.backlog-task-row:hover .task-name-box { border-color: var(--accent); background: #fff4e7; }
+.tags-box {
+    background: #eadcf1;
+    color: #50365e;
+    border: 1px solid #d0b9dc;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+.tags-box .text-white-50 { color: #66556f !important; }
+.story-points-box { background: var(--sun-lemon); color: var(--ink); border: 1px solid #d4cb64; }
+.task-name-box .badge.bg-light { background: #f1e5f2 !important; color: #50365e !important; }
+.bg-primary-subtle, .task-card-type-story { background: #eadcf1 !important; color: #50365e !important; }
+.bg-danger-subtle, .task-card-type-bug { background: #fbdcda !important; color: #8f253b !important; }
+.backlog-content .text-primary { color: #50365e !important; }
+.backlog-content .text-danger { color: #8f253b !important; }
+.task-card {
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-top: 5px solid var(--priority-edge, var(--accent));
+    overflow-wrap: anywhere;
+}
+.task-card:hover { box-shadow: 0 10px 24px rgba(71,42,80,.16); }
+.task-card-points { background: var(--sun-lemon); color: var(--ink); }
+.task-card-tag, .task-card-assignee { background: #eadcf1; color: #50365e; opacity: 1; }
+.task-card-divider { background: var(--line); }
+.task-card-no-tag, .task-card-priority-label { opacity: 1; color: var(--muted); }
+.task-card-footer { gap: .5rem; flex-wrap: wrap; }
+.priority-card-low { --priority-edge: #46ff04; background-color: #46ff04 !important; color: #000000 !important; }
+.priority-card-low .task-card-title, .priority-card-low .task-card-no-tag, .priority-card-low .task-card-priority-label { color: #000000 !important; }
+.priority-card-medium { --priority-edge: #fffc04; background-color: #fffc04 !important; color: #000000 !important; }
+.priority-card-medium .task-card-title, .priority-card-medium .task-card-no-tag, .priority-card-medium .task-card-priority-label { color: #000000 !important; }
+.priority-card-important { --priority-edge: #ff8c04; background-color: #ff8c04 !important; color: #000000 !important; }
+.priority-card-important .task-card-title, .priority-card-important .task-card-no-tag, .priority-card-important .task-card-priority-label { color: #000000 !important; }
+.priority-card-urgent { --priority-edge: #ff3131; background-color: #ff3131 !important; color: #ffffff !important; }
+.priority-card-urgent .task-card-title, .priority-card-urgent .task-card-no-tag, .priority-card-urgent .task-card-priority-label { color: #ffffff !important; }
+.priority-box.low { background: #46ff04; color: #000000; font-weight: bold; border: none; }
+.priority-box.medium { background: #fffc04; color: #000000; font-weight: bold; border: none; }
+.priority-box.important { background: #ff8c04; color: #ffffff; font-weight: bold; border: none; }
+.priority-box.urgent { background: #ff3131; color: #ffffff; font-weight: bold; border: none; }
+
+/* Forms and menus: one light surface and visible keyboard focus. */
+.form-control, .form-select, .sort-select, .filter-btn {
+    background-color: var(--surface);
+    color: var(--ink);
+    border-color: #987c9b;
+    border-radius: 8px;
+}
+.form-control::placeholder { color: #75667b; opacity: 1; }
+.form-control:focus, .form-select:focus, .filter-btn:focus-visible {
+    color: var(--ink);
+    background-color: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 .2rem rgba(117,66,105,.2);
+}
+.form-select option, .dropdown-menu { color: var(--ink); background: var(--surface); }
+.dropdown-menu { border-color: var(--line); }
+.dropdown-header, .form-check-label { color: var(--ink); }
+.form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
+.choice-grid > div > div label { color: var(--ink); background: var(--surface); border-color: #987c9b; }
+.choice-grid label:has(input:checked) {
+    color: var(--ink); background: var(--sun-lemon); border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+.choice-grid label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
+.invalid-feedback, .text-danger, .form-label > span { color: #a3233d !important; }
+.alert-danger { color: #842238; background: #fce1e3; border-color: #e3aab4; }
+.alert-success { color: #285035; background: #e2efdc; border-color: #a2c59b; }
+
+/* Buttons retain clear primary, secondary and destructive roles. */
+.btn-primary, .btn-create-task, .btn-create-submit {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--accent);
+    --bs-btn-border-color: var(--accent);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--accent-hover);
+    --bs-btn-hover-border-color: var(--accent-hover);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--accent-hover);
+    color: #fff; background: var(--accent); border: 1px solid var(--accent);
+    border-radius: 10px;
+}
+.btn-primary:hover, .btn-primary:active, .btn-create-task:hover, .btn-create-submit:hover {
+    color: #fff; background: var(--accent-hover); border-color: var(--accent-hover);
+}
+.btn-outline-primary, .btn-outline-secondary, .btn-edit-task {
+    color: var(--accent); background: var(--surface); border: 1px solid var(--accent); border-radius: 10px;
+}
+.btn-outline-primary:hover, .btn-outline-secondary:hover, .btn-edit-task:hover,
+.btn-outline-primary:active, .btn-outline-secondary:active {
+    color: var(--ink); background: var(--sun-lemon); border-color: var(--accent);
+}
+.btn-delete-task { color: #fff; background: #a3233d; border-color: #a3233d; border-radius: 10px; }
+.btn-delete-task:hover { color: #fff; background: #80172e; border-color: #80172e; }
+.btn-link { color: var(--accent); }
+.btn-link:hover { color: var(--accent-hover); }
+a:focus-visible, button:focus-visible, .btn:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 3px;
+}
+.view-toggle-track { background: #8b7894; }
+.view-toggle-switch input:checked + .view-toggle-track { background: var(--accent); }
+.view-toggle-thumb { background: var(--sun-lemon); }
+.view-toggle-label.active { color: var(--accent) !important; }
+.view-toggle-switch:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 20px; }
+
+/* Keep narrow screens readable without horizontal overflow. */
+@media (max-width: 768px) {
+    .app-navbar .container-fluid { gap: .5rem; }
+    .app-navbar .navbar-brand { font-size: 1rem; margin-right: 0; }
+    .backlog-header { padding: 1rem; }
+    .controls-toolbar { width: 100%; }
+    .backlog-task-row { background: var(--surface); border-color: var(--line); }
+    .task-name-box { flex-wrap: wrap; }
+    .card-view-grid { grid-template-columns: minmax(0, 1fr); }
+    .history-entry { flex-direction: column; align-items: flex-start; }
+    .history-timestamp { white-space: normal; }
+    .history-description { text-align: left; }
+    .detail-actions { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* =========================================================
+   Backlog glass skin: paint-only overrides, no geometry changes.
+   Existing DOM, grid columns, spacing and component sizes stay intact.
+   ========================================================= */
+:root {
+    --bg-sunset:
+        radial-gradient(ellipse at 12% 0%, rgba(255,223,151,.82), transparent 48%),
+        radial-gradient(ellipse at 92% 32%, rgba(235,143,157,.55), transparent 55%),
+        linear-gradient(160deg, #f6ba91 0%, #e9a9b2 38%, #c8acd2 70%, #a6acd4 100%);
+    --glass-bg: rgba(255, 255, 255, 0.22);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.45);
+    --glass-shadow: inset 0 1px 2px rgba(255,255,255,.4),
+                    inset 0 0 0 1px rgba(255,255,255,.18),
+                    0 0 0 1px rgba(255,255,255,.16),
+                    0 25px 50px rgba(0,0,0,.04);
+    --tag-frontend: rgba(219,207,239,.72);
+    --tag-backend: rgba(209,222,237,.72);
+    --tag-bug: rgba(239,210,219,.76);
+    --tag-urgent: rgba(237,204,214,.82);
+    --tag-ink: #513752;
+    --row-highlight: rgba(255,255,255,.58);
+    --row-glow: 0 0 0 1px rgba(255,255,255,.7),
+                0 0 18px rgba(235,153,139,.18),
+                0 4px 14px rgba(126,87,149,.08);
+}
+body.bg-light {
+    background-image: var(--bg-sunset) !important;
+}
+/* Fixed decorative lights sit behind content and never intercept clicks. */
+body.bg-light:has(.backlog-content) { isolation: isolate; }
+body.bg-light:has(.backlog-content)::before,
+body.bg-light:has(.backlog-content)::after {
+    content: "";
+    position: fixed;
+    z-index: -1;
+    pointer-events: none;
+    width: min(65vw, 850px);
+    height: min(75vh, 750px);
+    border-radius: 50%;
+    filter: blur(120px);
+    animation: ambient-drift 24s ease-in-out infinite alternate;
+}
+body.bg-light:has(.backlog-content)::before {
+    top: 8vh;
+    left: -8vw;
+    background: rgba(255,110,64,.4);
+}
+body.bg-light:has(.backlog-content)::after {
+    right: -6vw;
+    bottom: 2vh;
+    background: radial-gradient(ellipse at 30% 30%, rgba(246,102,177,.4),
+                rgba(100,180,245,.38) 65%, transparent 90%);
+    animation-delay: -12s;
+}
+@keyframes ambient-drift {
+    from { transform: translate3d(0,0,0) scale(1); }
+    to { transform: translate3d(3vw,-3vh,0) scale(1.06); }
+}
+.backlog-content .task-title-text,
+.backlog-content .task-card-title { color: #2d3748; font-weight: 600; }
+.backlog-content .backlog-list-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: #68616e !important;
+    letter-spacing: .06em;
+}
+
+/* Remove the previous decorative rings only behind this workspace. */
+.main-wrapper:has(.backlog-content) { background: transparent; }
+.backlog-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    outline: var(--glass-border);
+    outline-offset: -1px;
+    border-radius: 20px;
+    box-shadow: var(--glass-shadow);
+}
+.backlog-header {
+    background: rgba(255,255,255,.3);
+    border-color: rgba(255,255,255,.6);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
+}
+/* Existing controls retain their width, padding and right alignment. */
+.backlog-content .sort-select,
+.backlog-content .filter-btn {
+    background-color: rgba(255,255,255,.55);
+    border-color: rgba(255,255,255,.72);
+    border-radius: 999px;
+    color: #3c3047;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 6px rgba(76,45,91,.04);
+}
+.backlog-content .dropdown-menu {
+    background: rgba(255,250,252,.96);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-color: rgba(255,255,255,.8);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow) !important;
+}
+.backlog-content .sort-select option { background: #fffafc; color: #3c3047; }
+.backlog-content .view-toggle-track {
+    background: rgba(131,111,147,.5);
+    box-shadow: inset 0 1px 3px rgba(67,42,79,.15);
+}
+.backlog-content .view-toggle-switch input:checked + .view-toggle-track { background: #806487; }
+.backlog-content .view-toggle-thumb {
+    background: linear-gradient(145deg, #fffaf0, #f5e3d3);
+    box-shadow: 0 2px 5px rgba(73,45,85,.18), inset 0 1px 0 white;
+}
+/* Every task remains on its existing grid track, including on hover. */
+.backlog-task-row {
+    background: rgba(255,255,255,.12);
+    border-color: rgba(255,255,255,.15);
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,.15);
+    border-radius: 8px;
+    transform: none;
+    transition: background-color .22s ease, box-shadow .22s ease;
+}
+.backlog-task-row .task-name-box {
+    background: rgba(255,255,255,.42);
+    border-color: transparent;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+}
+.backlog-task-row .tags-box {
+    background: rgba(255,255,255,.35);
+    font-weight: 500;
+    color: var(--tag-ink);
+    border-color: transparent;
+}
+.backlog-content .task-card-tag,
+.backlog-content .task-card-assignee,
+.backlog-content .task-name-box .badge.bg-light {
+    background: var(--tag-frontend) !important;
+    color: var(--tag-ink) !important;
+    border-color: rgba(255,255,255,.45) !important;
+}
+.backlog-content .bg-primary-subtle,
+.backlog-content .task-card-type-story {
+    background: var(--tag-backend) !important;
+    color: #38485e !important;
+}
+.backlog-content .bg-danger-subtle,
+.backlog-content .task-card-type-bug {
+    background: var(--tag-bug) !important;
+    color: #71364b !important;
+}
+.backlog-content .priority-box.low { background: #46ff04; color: #000000; font-weight: bold; }
+.backlog-content .priority-box.medium { background: #fffc04; color: #000000; font-weight: bold; }
+.backlog-content .priority-box.important { background: #ff8c04; color: #ffffff; font-weight: bold; }
+.backlog-content .priority-box.urgent {
+    background: #ff3131;
+    color: #ffffff;
+    font-weight: bold;
+    box-shadow: 0 0 12px rgba(255,49,49,.4);
+}
+.backlog-content .story-points-box,
+.backlog-content .task-card-points {
+    background: linear-gradient(145deg, rgba(255,235,229,.65), rgba(243,216,228,.35));
+    border-radius: 999px;
+    font-size: 1.1rem;
+    color: #59402f;
+    border-color: rgba(255,255,255,.62);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.85),
+                inset 0 -3px 8px rgba(214,145,163,.1),
+                0 2px 8px rgba(228,171,121,.13);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    font-weight: 750;
+}
+.backlog-content .task-card {
+    background: rgba(255,255,255,.46);
+    border-color: rgba(255,255,255,.6);
+    box-shadow: var(--glass-shadow);
+    transition: background-color .22s ease, box-shadow .22s ease;
+    transform: none;
+}
+.backlog-task-row .task-name-box,
+.backlog-content .filter-btn {
+    transition: background-color .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.backlog-task-row:hover,
+.backlog-task-row:focus-visible,
+.backlog-content .task-card:hover,
+.backlog-content .task-card:focus-visible {
+    transform: none;
+    background: var(--row-highlight);
+    box-shadow: var(--row-glow);
+}
+.backlog-task-row:hover .task-name-box,
+.backlog-task-row:focus-visible .task-name-box {
+    background: rgba(255,255,255,.6);
+    border-color: rgba(255,255,255,.65);
+}
+.backlog-content .filter-btn:hover { background-color: rgba(255,255,255,.8); }
+/* Opaque fallback keeps text legible in browsers without backdrop blur. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .backlog-content { background: #f5e7ef; }
+    .backlog-content .dropdown-menu { background: #fffafc; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .backlog-task-row, .backlog-task-row .task-name-box,
+    .backlog-content .task-card, .backlog-content .filter-btn { transition: none; }
+}
+
+.backlog-content .task-name-box .badge.bg-light,
+.backlog-content .task-card-assignee {
+    background: rgba(255,255,255,.2) !important;
+    color: #68616e !important;
+    font-weight: 500;
+    border-color: transparent !important;
+}
+
+@media (prefers-reduced-motion: reduce), (max-width: 768px) {
+    body.bg-light:has(.backlog-content)::before,
+    body.bg-light:has(.backlog-content)::after { animation: none; }
+}
+
+.backlog-content .task-card-tag {
+    background: rgba(255,255,255,.35) !important;
+    color: #513752 !important;
+    font-weight: 500;
+    border-color: transparent !important;
+}
+
+/* Summer accents: decorative sunset and quiet water reflections. */
+.app-navbar { isolation: isolate; }
+.app-navbar::before {
+    content: "";
+    position: absolute;
+    right: 180px;
+    top: 7px;
+    width: 170px;
+    height: 66px;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 50% 42%, #fff1a6 0 13px, #ffc98d 14px 19px, transparent 20px),
+        radial-gradient(ellipse at 50% 48%, rgba(255,212,145,.5), transparent 68%);
+}
+.app-navbar::after {
+    content: "";
+    position: absolute;
+    right: 180px;
+    top: 46px;
+    width: 170px;
+    height: 28px;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: 50%;
+    background:
+        linear-gradient(rgba(255,246,210,.8), rgba(255,246,210,.8)) center 3px / 56px 1px no-repeat,
+        linear-gradient(rgba(255,246,210,.65), rgba(255,246,210,.65)) center 10px / 36px 1px no-repeat,
+        linear-gradient(rgba(255,246,210,.5), rgba(255,246,210,.5)) center 17px / 18px 1px no-repeat,
+        repeating-radial-gradient(ellipse at 50% -25%, transparent 0 11px,
+            rgba(114,126,173,.28) 12px 13px, transparent 14px 22px);
+}
+.main-wrapper:has(.backlog-content) {
+    background:
+        repeating-radial-gradient(ellipse at 16% 115%, transparent 0 74px,
+            rgba(255,255,255,.14) 76px 78px, transparent 81px 126px),
+        repeating-radial-gradient(ellipse at 95% 125%, transparent 0 98px,
+            rgba(255,243,217,.1) 100px 102px, transparent 105px 165px),
+        linear-gradient(to top, rgba(142,194,211,.14), transparent 42%);
+}
+@media (max-width: 900px) {
+    .app-navbar::before, .app-navbar::after { display: none; }
+}

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Task | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container create-task-page px-4">
+
+    <a href="{% url 'backlog:task_detail' task.id %}"
+       class="back-link">
+        ← Back to Task
+    </a>
+
+    <h1 class="create-title mt-2">Edit Task</h1>
+
+    <p class="text-muted">
+        Update the details of this backlog task.
+    </p>
+
+    <form method="post"
+          enctype="multipart/form-data"
+          class="task-form-card shadow-sm"
+          novalidate>
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <section class="form-section">
+            <h2>Task details</h2>
+
+            <div class="mb-4">
+                <label class="form-label"
+                       for="{{ form.title.id_for_label }}">
+                    Task name <span>*</span>
+                </label>
+
+                {{ form.title }}
+
+                {% for error in form.title.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-lg-6">
+                    <fieldset>
+                        <legend class="form-label">
+                            Item type <span>*</span>
+                        </legend>
+
+                        <div class="choice-grid choice-grid-2">
+                            {{ form.item_type }}
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div class="col-lg-6">
+                    <label class="form-label"
+                           for="{{ form.story_points.id_for_label }}">
+                        Story points (0–10) <span>*</span>
+                    </label>
+
+                    {{ form.story_points }}
+                </div>
+
+            </div>
+        </section>
+
+        <section class="form-section">
+
+            <fieldset>
+                <legend class="form-label">
+                    Tags <span>*</span>
+                </legend>
+
+                <div class="tag-checkboxes">
+                    {{ form.tags }}
+                </div>
+            </fieldset>
+
+        </section>
+
+        <section class="form-section">
+
+            <fieldset>
+                <legend class="form-label">
+                    Priority <span>*</span>
+                </legend>
+
+                <div class="choice-grid choice-grid-4 priority-options">
+                    {{ form.priority }}
+                </div>
+            </fieldset>
+
+            <div class="mt-4">
+
+                <label class="form-label"
+                       for="{{ form.assignee.id_for_label }}">
+                    Assignee <span>*</span>
+                </label>
+
+                {{ form.assignee }}
+
+            </div>
+
+        </section>
+
+        <section class="form-section">
+
+            <div class="mb-4">
+
+                <label class="form-label"
+                       for="{{ form.description.id_for_label }}">
+                    Task description <span>*</span>
+                </label>
+
+                {{ form.description }}
+
+        </section>
+
+        <section class="form-section">
+
+            <div class="row g-4">
+
+                <div class="col-lg-6">
+
+                    <fieldset>
+                        <legend class="form-label">
+                            Task status <span>*</span>
+                        </legend>
+
+                        <div class="choice-grid choice-grid-3">
+                            {{ form.status }}
+                        </div>
+                    </fieldset>
+
+                </div>
+
+                <div class="col-lg-6">
+
+                    <fieldset>
+                        <legend class="form-label">
+                            Task stage <span>*</span>
+                        </legend>
+
+                        <div class="choice-grid choice-grid-2">
+                            {{ form.stage }}
+                        </div>
+                    </fieldset>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <div class="form-actions">
+
+            <a class="btn btn-outline-secondary"
+               href="{% url 'backlog:task_detail' task.id %}">
+                Cancel
+            </a>
+
+            <button type="submit"
+                    class="btn btn-create-submit">
+                Confirm
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+{% endblock %}

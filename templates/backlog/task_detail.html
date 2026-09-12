@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ task.title }} | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+    <!-- Back link -->
+    <a href="{% url 'backlog:product_backlog' %}" class="back-link d-inline-flex align-items-center gap-1 mb-3">
+        <i class="bi bi-arrow-left"></i> Back to Backlog
+    </a>
+
+    <!-- Task Title -->
+    <h1 class="detail-task-title mb-4">{{ task.title }}</h1>
+
+    <!-- Two-panel layout: Details | History -->
+    <div class="detail-panels">
+
+        <!-- LEFT: Details -->
+        <div class="detail-panel detail-panel-info">
+            <div class="detail-panel-heading">Details:</div>
+            <div class="detail-field"><span class="detail-label">Type:</span> {{ task.get_item_type_display }}</div>
+            <div class="detail-field"><span class="detail-label">Story Points:</span> {{ task.story_points }}</div>
+            <div class="detail-field">
+                <span class="detail-label">Tags:</span>
+                {% for tag in task.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+            </div>
+            <div class="detail-field"><span class="detail-label">Priority:</span> {{ task.get_priority_display }}</div>
+            <div class="detail-field">
+                <span class="detail-label">Assignee:</span>
+                {% if task.assignee %}{{ task.assignee.get_full_name|default:task.assignee.username }}{% else %}—{% endif %}
+            </div>
+            <div class="detail-field">
+                <span class="detail-label">Task Description:</span>
+                {% if task.description %}{{ task.description }}{% else %}…{% endif %}
+            </div>
+            <div class="detail-field"><span class="detail-label">Status:</span> {{ task.get_status_display }}</div>
+            <div class="detail-field"><span class="detail-label">Stage:</span> {{ task.get_stage_display }}</div>
+        </div>
+
+        <!-- RIGHT: History -->
+        <div class="detail-panel detail-panel-history">
+            <div class="detail-panel-heading">History:</div>
+            {% if history %}
+                {% for entry in history %}
+                <div class="history-entry">
+                    <span class="history-timestamp">
+                        {{ entry.timestamp|date:"j" }}<sup>{{ entry.timestamp|date:"S" }}</sup>
+                        {{ entry.timestamp|date:"F Y, g:ia" }}
+                    </span>
+                    <span class="history-description">{{ entry.description }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted fs-7 mt-2">No history recorded yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="detail-actions">
+    <a href="{% url 'backlog:edit_task' task.id %}"
+       class="btn btn-edit-task">
+        Edit task
+    </a>
+
+    {% if task.status != 'completed' %}
+    <a href="{% url 'backlog:delete_task' task.id %}"
+       class="btn btn-delete-task">
+        Delete task
+    </a>
+    {% endif %}
+    
+</div>
+
+</div>
+{% endblock %}

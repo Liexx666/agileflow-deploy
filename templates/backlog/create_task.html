@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Create New Task | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container create-task-page px-4">
+    <a href="{% url 'backlog:product_backlog' %}"
+       class="back-link">
+        ← Product Backlog
+    </a>
+
+    <h1 class="create-title mt-2">Create new task</h1>
+
+    <p class="text-muted">
+        Add a complete, estimated and accountable item to the
+        Product Backlog.
+    </p>
+
+    <form method="post"
+          class="task-form-card shadow-sm"
+          novalidate>
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <section class="form-section">
+            <h2>Task details</h2>
+
+            <div class="mb-4">
+                <label class="form-label"
+                       for="{{ form.title.id_for_label }}">
+                    Task name <span>*</span>
+                </label>
+
+                {{ form.title }}
+
+                {% for error in form.title.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <fieldset>
+                        <legend class="form-label">
+                            Item type <span>*</span>
+                        </legend>
+
+                        <div class="choice-grid choice-grid-2">
+                            {{ form.item_type }}
+                        </div>
+
+                        {% for error in form.item_type.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </fieldset>
+                </div>
+
+                <div class="col-lg-6">
+                    <label class="form-label"
+                           for="{{ form.story_points.id_for_label }}">
+                        Story points (0–10) <span>*</span>
+                    </label>
+
+                    {{ form.story_points }}
+
+                    <div class="form-text">
+                        Use a whole number. Zero represents the lowest effort.
+                    </div>
+
+                    {% for error in form.story_points.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ error }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+        <section class="form-section">
+            <fieldset>
+                <legend class="form-label">
+                    Tags <span>*</span>
+                    <small>Select at least one</small>
+                </legend>
+
+                <div class="tag-checkboxes">
+                    {{ form.tags }}
+                </div>
+
+                {% for error in form.tags.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </fieldset>
+        </section>
+
+        <section class="form-section">
+            <div>
+                <label class="form-label"
+                       for="{{ form.priority.id_for_label }}">
+                    Priority <span>*</span>
+                </label>
+
+                {{ form.priority }}
+
+                {% for error in form.priority.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-4">
+                <label class="form-label"
+                       for="{{ form.assignee.id_for_label }}">
+                    Assignee <span>*</span>
+                </label>
+
+                {{ form.assignee }}
+
+                {% for error in form.assignee.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="mb-4">
+                <label class="form-label"
+                       for="{{ form.description.id_for_label }}">
+                    Task description <span>*</span>
+                </label>
+
+                {{ form.description }}
+
+                {% for error in form.description.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="form-section">
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <fieldset>
+                        <legend class="form-label">
+                            Task status <span>*</span>
+                        </legend>
+
+                        <div class="choice-grid choice-grid-3">
+                            {{ form.status }}
+                        </div>
+
+                        {% for error in form.status.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </fieldset>
+                </div>
+
+                <div class="col-lg-6">
+                    <fieldset>
+                        <legend class="form-label">
+                            Task stage <span>*</span>
+                        </legend>
+
+                        <div class="choice-grid choice-grid-2">
+                            {{ form.stage }}
+                        </div>
+
+                        {% for error in form.stage.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </fieldset>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary"
+               href="{% url 'backlog:product_backlog' %}">
+                Cancel
+            </a>
+
+            <button type="submit" class="btn btn-create-submit">
+                Create task
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
