@@ -89,15 +89,20 @@
 
         <section class="form-section">
 
-            <fieldset>
-                <legend class="form-label">
+            <div>
+                <label class="form-label"
+                       for="{{ form.priority.id_for_label }}">
                     Priority <span>*</span>
-                </legend>
+                </label>
 
-                <div class="choice-grid choice-grid-4 priority-options">
-                    {{ form.priority }}
+                {{ form.priority }}
+
+                {% for error in form.priority.errors %}
+                <div class="invalid-feedback d-block">
+                    {{ error }}
                 </div>
-            </fieldset>
+                {% endfor %}
+            </div>
 
             <div class="mt-4">
 

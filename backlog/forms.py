@@ -133,7 +133,9 @@ class TaskEditForm(forms.ModelForm):
                 }
             ),
             "tags": forms.CheckboxSelectMultiple,
-            "priority": forms.RadioSelect,
+            "priority": forms.Select(
+                attrs={"class": "form-select"}
+            ),
             "assignee": forms.Select(
                 attrs={"class": "form-select"}
             ),
