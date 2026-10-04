@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% load static work_time %}
+
+{% block title %}{{ current_sprint.name|default:"Sprint Board" }} | AgileFlow{% endblock %}
+
+{% block content %}
+<style>
+    .kanban-tasks-container {
+        transition: background-color 0.2s ease, outline 0.2s ease;
+        min-height: 150px;
+    }
+    .kanban-tasks-container.drag-over {
+        background-color: #f1f5f9 !important;
+        outline: 2px dashed #0d6efd !important;
+        outline-offset: -2px;
+        border-radius: 0.375rem;
+    }
+    .sticky-task-card.dragging {
+        opacity: 0.5;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: scale(1.02);
+        cursor: grabbing !important;
+    }
+</style>
+<div class="sprint-board-container">
+    {% csrf_token %}
+
+
+
+    <div class="d-flex border-bottom mb-4 mt-2">
+        <a href="{% if current_sprint %}{% url 'backlog:sprint_backlog' current_sprint.id %}{% else %}{% url 'backlog:product_backlog' %}{% endif %}" class="text-decoration-none py-2 px-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light" style="margin-bottom: -2px;">
+            Backlog
+        </a>
+        <a href="{% if current_sprint %}{% url 'backlog:sprint_board_detail' current_sprint.id %}{% else %}{% url 'backlog:sprint_board' %}{% endif %}" class="text-decoration-none py-2 px-4 fw-semibold text-primary border-bottom border-primary border-2" style="margin-bottom: -2px;">
+            Board
+        </a>
+    </div>
+
+    <!-- Top Sprint Selection & Controls -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <label for="sprintSelect" class="fw-bold text-muted fs-7 mb-0">Select Sprint:</label>
+            <select id="sprintSelect" class="form-select form-select-sm" style="min-width: 220px; font-weight: 600;" onchange="if (this.value) window.location.href='/sprint-board/' + this.value + '/';">
+                {% if not current_sprint %}<option value="" selected>Select a Sprint</option>{% endif %}
+                {% for sprint in sprints %}
+                <option value="{{ sprint.id }}" {% if current_sprint and sprint.id == current_sprint.id %}selected{% endif %}>
+                    {{ sprint.name }} ({{ sprint.get_status_display }})
+                </option>
+                {% empty %}
+                <option value="">No Sprints Available</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if current_sprint %}
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge {{ current_sprint.status_badge_class }} rounded-pill px-3 py-2 fs-7 shadow-sm border">
+                {{ current_sprint.get_status_display }}
+            </span>
+            <a href="{% url 'backlog:sprint_detail' current_sprint.id %}" class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center text-decoration-none" style="width: 36px; height: 36px; padding: 0;" title="Sprint Details">
+                <i class="bi bi-info-circle text-primary fs-5"></i>
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0;" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sprint Options">
+                    <i class="bi bi-three-dots-vertical text-dark fs-5"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm fs-7">
+                    {% if user.is_staff or user.is_superuser %}
+                        <li><a class="dropdown-item py-2" href="{% url 'backlog:edit_sprint' current_sprint.id %}?next={{ request.path|urlencode }}"><i class="bi bi-pencil-square me-2 text-muted"></i>Edit Sprint</a></li>
+                        {% if current_sprint.status == 'stopped' or current_sprint.status == 'not_started' %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{% url 'backlog:delete_sprint' current_sprint.id %}"><i class="bi bi-trash3 me-2 text-danger"></i>Delete Sprint</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li>
+                            <button type="button" class="dropdown-item py-2 w-100 text-start" data-bs-toggle="modal" data-bs-target="#scrumMasterModal{{ current_sprint.id }}">
+                                <i class="bi bi-person-badge me-2 text-muted"></i>Select Scrum Master
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2 w-100 text-start" data-bs-toggle="modal" data-bs-target="#productOwnerModal{{ current_sprint.id }}">
+                                <i class="bi bi-person-check me-2 text-muted"></i>Select Product Owner
+                            </button>
+                        </li>
+
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+
+        {% endif %}
+    </div>
+
+    <!-- Header Section (Matching Wireframe) -->
+    <div class="sprint-board-header-section">
+        <div>
+            <h1 class="sprint-main-title" id="sprintBoardTitle">
+                {{ current_sprint.name|default:"No Active Sprint" }}
+            </h1>
+            <h2 class="sprint-sub-title">Kanban Board</h2>
+            <p class="sprint-instruction-text">
+                <i class="bi bi-cursor-fill me-1 text-primary"></i> Open tasks to record time spent. Use the status menu to update progress.
+            </p>
+        </div>
+
+
+    </div>
+
+    {% if not current_sprint %}
+    <div class="card p-5 text-center shadow-sm">
+        <div class="text-muted fs-1 mb-2"><i class="bi bi-kanban"></i></div>
+        <h3>No Active Sprint</h3>
+        <p class="text-muted">There is no active Sprint available to you. Select a Sprint above or open Backlogs to plan your work.</p>
+        {% if user.is_staff or user.is_superuser %}
+        <div class="mt-2">
+            <a href="{% url 'backlog:create_sprint' %}" class="btn btn-primary">Create New Sprint</a>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+
+    <!-- ========================================================= -->
+    <!-- 1. KANBAN BOARD VIEW (3 Wireframe Columns: Not Started, Active, Completed) -->
+    <!-- ========================================================= -->
+    <div id="kanbanView" class="kanban-columns-grid">
+        
+        <!-- Column 1: Not Started -->
+        <div class="kanban-column-box" data-status="not_started" id="column-not-started">
+            <div class="kanban-column-heading">
+                <span>Not started</span>
+                <span class="badge bg-secondary rounded-pill fs-7 column-count">{{ not_started_tasks.count }}</span>
+            </div>
+            
+            <div class="kanban-tasks-container" id="notStartedTasks">
+                {% for task in not_started_tasks %}
+                {% include "backlog/_board_task.html" %}
+                {% empty %}
+                <div class="text-center text-muted p-4 border border-dashed rounded empty-placeholder">
+                    <small>No tasks in this status</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Column 2: Active / In Progress -->
+        <div class="kanban-column-box" data-status="in_progress" id="column-in-progress">
+            <div class="kanban-column-heading">
+                <span>Active</span>
+                <span class="badge bg-warning text-dark rounded-pill fs-7 column-count">{{ in_progress_tasks.count }}</span>
+            </div>
+            
+            <div class="kanban-tasks-container" id="inProgressTasks">
+                {% for task in in_progress_tasks %}
+                {% include "backlog/_board_task.html" %}
+                {% empty %}
+                <div class="text-center text-muted p-4 border border-dashed rounded empty-placeholder">
+                    <small>No tasks in this status</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Column 3: Completed -->
+        <div class="kanban-column-box" data-status="completed" id="column-completed">
+            <div class="kanban-column-heading">
+                <span>Completed</span>
+                <span class="badge bg-success rounded-pill fs-7 column-count">{{ completed_tasks.count }}</span>
+            </div>
+            
+            <div class="kanban-tasks-container" id="completedTasks">
+                {% for task in completed_tasks %}
+                {% include "backlog/_board_task.html" %}
+                {% empty %}
+                <div class="text-center text-muted p-4 border border-dashed rounded empty-placeholder">
+                    <small>No tasks in this status</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- 2. SPRINT BURNDOWN CHART (US-21) -->
+    <!-- ========================================================= -->
+    <div class="mt-5 mb-4">
+        <h2 class="fs-4 fw-bold text-dark mb-3">Burndown Chart</h2>
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <p id="burndownSummary" class="fw-semibold" aria-live="polite">
+                Remaining: {{ burndown_data.remaining_story_points }} / {{ burndown_data.total_story_points }} story points ({{ burndown_data.remaining_percentage }}%)
+            </p>
+            <div id="burndownPlot" class="position-relative" style="height: 400px; width: 100%;" {% if not burndown_data.available %}hidden{% endif %}>
+                <canvas id="burndownChart" data-url="{% url 'backlog:sprint_burndown' current_sprint.id %}" role="img" aria-label="Sprint burndown: ideal and actual remaining work"></canvas>
+            </div>
+            <p id="burndownNote" class="text-secondary small mt-3">{{ burndown_data.note }}</p>
+            <p id="burndownError" class="text-danger small" role="alert" hidden></p>
+            <div class="mt-4 p-3 bg-light border border-light-subtle rounded-3 text-secondary" style="font-size: 0.85rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong class="text-dark">Percentage of work left:</strong> Incomplete tasks' story points divided by all tasks' story points in this Sprint, multiplied by 100.
+            </div>
+        </div>
+        {{ burndown_data|json_script:"sprintBurndownData" }}
+    </div>
+
+
+
+    {% endif %}
+</div>
+</div>
+
+{% if current_sprint %}
+<!-- Scrum Master Modal -->
+<div class="modal fade" id="scrumMasterModal{{ current_sprint.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fs-6 fw-bold">Select Scrum Master</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'backlog:assign_sprint_role' current_sprint.id 'scrum_master' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <select name="user_id" class="form-select shadow-none">
+                            <option value="" disabled selected>Choose a team member...</option>
+                            {% for member in current_sprint.team_members.all %}
+                                {% if not member.is_superuser and member != current_sprint.product_owner %}
+                                    <option value="{{ member.id }}" {% if current_sprint.scrum_master == member %}selected{% endif %}>{{ member.get_full_name|default:member.username }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Owner Modal -->
+<div class="modal fade" id="productOwnerModal{{ current_sprint.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fs-6 fw-bold">Select Product Owner</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'backlog:assign_sprint_role' current_sprint.id 'product_owner' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <select name="user_id" class="form-select shadow-none">
+                            <option value="" disabled selected>Choose a team member...</option>
+                            {% for member in current_sprint.team_members.all %}
+                                {% if not member.is_superuser and member != current_sprint.scrum_master %}
+                                    <option value="{{ member.id }}" {% if current_sprint.product_owner == member %}selected{% endif %}>{{ member.get_full_name|default:member.username }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/sprint_burndown.js' %}?v=20261004b"></script>
+<script src="{% static 'js/sprint_board.js' %}?v=20261004b"></script>
+<script>
+    sessionStorage.setItem('last_board_url', window.location.href);
+</script>
+{% endblock %}

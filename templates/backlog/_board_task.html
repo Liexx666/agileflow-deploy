@@ -1,0 +1,13 @@
+{% load work_time %}
+<div class="sprint-task-item mb-3">
+    <a href="{% url 'backlog:task_detail' task.id %}" class="sticky-task-card mb-1" style="cursor: pointer;" {% if can_edit_sprint %}draggable="true"{% endif %} data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-story-points="{{ task.story_points|default:0 }}">
+        <div class="sticky-task-title">• {{ task.title }}</div>
+        {% if task.description %}<p class="text-muted fs-8 mb-2">{{ task.description|truncatechars:160 }}</p>{% endif %}
+        <div class="sticky-task-meta">
+            <span class="badge bg-dark text-white rounded-pill px-2">{{ task.story_points }} pts</span>
+            <span class="badge bg-secondary text-white rounded-pill px-2">{{ task.get_priority_display }}</span>
+            {% if task.assignee %}<span class="fw-semibold"><i class="bi bi-person"></i> {{ task.assignee.get_full_name|default:task.assignee.username }}</span>{% endif %}
+            <span class="badge bg-primary-subtle text-primary rounded-pill px-2">Total time: {{ task.accumulated_hours|hours_duration }}</span>
+        </div>
+    </a>
+</div>

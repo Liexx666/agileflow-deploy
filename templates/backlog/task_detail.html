@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static work_time tz %}
 
 {% block title %}{{ task.title }} | AgileFlow{% endblock %}
 
@@ -7,73 +7,187 @@
 <div class="container-fluid px-4 py-3">
 
     <!-- Back link -->
-    <a href="{% url 'backlog:product_backlog' %}" class="back-link d-inline-flex align-items-center gap-1 mb-3">
-        <i class="bi bi-arrow-left"></i> Back to Backlog
+    <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('last_board_url') || '{% if task.sprint_id %}{% url "backlog:sprint_board_detail" task.sprint_id %}{% else %}{% url "backlog:product_backlog" %}{% endif %}';" class="back-link d-inline-flex align-items-center gap-1 mb-3 text-decoration-none text-muted fw-medium">
+        <i class="bi bi-arrow-left"></i> Back
     </a>
 
     <!-- Task Title -->
     <h1 class="detail-task-title mb-4">{{ task.title }}</h1>
 
     <!-- Two-panel layout: Details | History -->
-    <div class="detail-panels">
-
+    <div class="row g-4 mb-4">
         <!-- LEFT: Details -->
-        <div class="detail-panel detail-panel-info">
-            <div class="detail-panel-heading">Details:</div>
-            <div class="detail-field"><span class="detail-label">Type:</span> {{ task.get_item_type_display }}</div>
-            <div class="detail-field"><span class="detail-label">Story Points:</span> {{ task.story_points }}</div>
-            <div class="detail-field">
-                <span class="detail-label">Tags:</span>
-                {% for tag in task.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
-            </div>
-            <div class="detail-field"><span class="detail-label">Priority:</span> {{ task.get_priority_display }}</div>
-            <div class="detail-field">
-                <span class="detail-label">Assignee:</span>
-                {% if task.assignee %}{{ task.assignee.get_full_name|default:task.assignee.username }}{% else %}—{% endif %}
-            </div>
-            <div class="detail-field">
-                <span class="detail-label">Task Description:</span>
-                {% if task.description %}{{ task.description }}{% else %}…{% endif %}
-            </div>
-            <div class="detail-field"><span class="detail-label">Status:</span> {{ task.get_status_display }}</div>
-            <div class="detail-field"><span class="detail-label">Stage:</span> {{ task.get_stage_display }}</div>
-        </div>
-
-        <!-- RIGHT: History -->
-        <div class="detail-panel detail-panel-history">
-            <div class="detail-panel-heading">History:</div>
-            {% if history %}
-                {% for entry in history %}
-                <div class="history-entry">
-                    <span class="history-timestamp">
-                        {{ entry.timestamp|date:"j" }}<sup>{{ entry.timestamp|date:"S" }}</sup>
-                        {{ entry.timestamp|date:"F Y, g:ia" }}
-                    </span>
-                    <span class="history-description">{{ entry.description }}</span>
+        <div class="col-lg-6">
+            <div class="detail-panel detail-panel-info h-100 p-4 border rounded-3 bg-white shadow-sm transition-all">
+                <div class="detail-panel-heading fs-5 mb-3 fw-bold text-dark border-bottom pb-2">Task Details</div>
+                <div class="detail-field mb-2"><span class="detail-label fw-semibold me-1 text-secondary">Type:</span> {{ task.get_item_type_display }}</div>
+                <div class="detail-field mb-2"><span class="detail-label fw-semibold me-1 text-secondary">Story Points:</span> <span class="badge bg-dark rounded-pill px-2">{{ task.story_points }}</span></div>
+                <div class="detail-field mb-2">
+                    <span class="detail-label fw-semibold me-1 text-secondary">Tags:</span>
+                    {% for tag in task.tags.all %}<span class="badge bg-secondary-subtle text-secondary rounded-pill me-1">{{ tag.name }}</span>{% empty %}—{% endfor %}
                 </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-muted fs-7 mt-2">No history recorded yet.</p>
-            {% endif %}
+                <div class="detail-field mb-2"><span class="detail-label fw-semibold me-1 text-secondary">Priority:</span> 
+                    <span class="badge {% if task.priority == 'urgent' %}bg-danger{% elif task.priority == 'important' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %} rounded-pill">{{ task.get_priority_display }}</span>
+                </div>
+                <div class="detail-field mb-2">
+                    <span class="detail-label fw-semibold me-1 text-secondary">Assignees:</span>
+                    {% if task.assignee %}<span class="text-primary fw-medium"><i class="bi bi-person-fill me-1"></i>{{ task.assignee.get_full_name|default:task.assignee.username }}</span>{% else %}—{% endif %}
+                </div>
+                <div class="detail-field mb-2 mt-3 p-3 bg-light rounded border border-light-subtle">
+                    <span class="detail-label fw-semibold d-block mb-1 text-secondary">Task Description:</span>
+                    <span class="text-dark">{% if task.description %}{{ task.description }}{% else %}No description provided.{% endif %}</span>
+                </div>
+                <div class="detail-field mb-2"><span class="detail-label fw-semibold me-1 text-secondary">Status:</span> {{ task.get_status_display }}</div>
+                <div class="detail-field mb-2"><span class="detail-label fw-semibold me-1 text-secondary">Stage:</span> {{ task.get_stage_display }}</div>
+            </div>
         </div>
 
+        <!-- RIGHT: Task activity panels -->
+        <div class="col-lg-6 d-flex flex-column gap-4">
+            
+            {% if task.sprint_id %}
+            <!-- US-19: Real work sessions, scoped to the current user. -->
+            <div class="detail-panel p-4 bg-white border rounded-3 shadow-sm transition-all">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                    <div class="fs-5 fw-bold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Time Tracking</div>
+                </div>
+                
+                <div class="time-log-list d-flex flex-column gap-2">
+                    <div class="text-muted small">Your work sessions ({{ time_zone }})</div>
+                    {% for session in time_entries %}
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-primary-subtle rounded border border-primary-subtle">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                {{ user.first_name|first|default:user.username|first|upper }}
+                            </div>
+                            <div>
+                                <div class="fw-semibold text-dark" style="font-size: 0.9rem;">{{ user.first_name|default:user.username }}</div>
+                                <div class="text-muted" style="font-size: 0.8rem;">{{ session.started_at|localtime|date:"d M Y H:i" }} – {{ session.ended_at|localtime|date:"d M Y H:i" }}</div>
+                                <div class="text-primary small">Logged {{ session.duration_label }}</div>
+                            </div>
+                        </div>
+                        {% if not edit_time_unavailable_reason %}
+                        <button type="button" class="btn btn-sm btn-light border shadow-sm text-primary d-flex align-items-center gap-1 px-2" data-bs-toggle="modal" data-bs-target="#editTimeModal"
+                                data-edit-url="{% url 'backlog:edit_task_time' task.id session.id %}"
+                                data-start-date="{{ session.started_at|localtime|date:'Y-m-d' }}" data-start-time="{{ session.started_at|localtime|date:'H:i' }}"
+                                data-end-date="{{ session.ended_at|localtime|date:'Y-m-d' }}" data-end-time="{{ session.ended_at|localtime|date:'H:i' }}">
+                            <i class="bi bi-pencil-square"></i> <span style="font-size: 0.85rem;">Edit</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted small mb-0">You have not logged any work sessions for this task.</p>
+                    {% endfor %}
+                </div>
+                
+                <!-- Total -->
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <span class="fs-6 fw-semibold text-secondary">Total Time Spent</span>
+                    <span class="fs-5 fw-bold text-primary">{{ task.accumulated_hours|hours_duration }}</span>
+                </div>
+                
+                <div class="mt-4">
+                    {% if not time_unavailable_reason %}
+                    <button type="button" class="btn btn-primary w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium shadow-sm" data-bs-toggle="modal" data-bs-target="#recordTimeModal">
+                        <i class="bi bi-plus-circle"></i> Record Time Spent
+                    </button>
+                    {% else %}
+                    <p class="text-muted small mb-0">{{ time_unavailable_reason }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- History Panel -->
+            <div class="detail-panel detail-panel-history p-4 bg-white border rounded-3 shadow-sm transition-all h-100">
+                <div class="detail-panel-heading fs-5 mb-3 fw-bold text-dark border-bottom pb-2"><i class="bi bi-journal-text me-2 text-secondary"></i>History</div>
+                {% if history %}
+                    <div class="d-flex flex-column gap-3 mt-3 overflow-auto" style="max-height: 300px;">
+                    {% for entry in history %}
+                    <div class="history-entry position-relative ps-3" style="border-left: 2px solid #e2e8f0;">
+                        <span class="history-timestamp text-muted d-block mb-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            {{ entry.timestamp|date:"j" }}<sup>{{ entry.timestamp|date:"S" }}</sup>
+                            {{ entry.timestamp|date:"F Y, g:ia" }}
+                        </span>
+                        <span class="history-description text-dark" style="font-size: 0.85rem;">{% if entry.is_time_entry_change %}<strong>{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</strong>: {% endif %}{{ entry.description }}</span>
+                    </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 text-light"></i>
+                        <span style="font-size: 0.85rem;">No history recorded yet.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- Action Buttons -->
     <div class="detail-actions">
+    {% if can_edit_task %}
     <a href="{% url 'backlog:edit_task' task.id %}"
        class="btn btn-edit-task">
         Edit task
     </a>
 
-    {% if task.status != 'completed' %}
+    {% if task.status != 'completed' and not task.sprint %}
     <a href="{% url 'backlog:delete_task' task.id %}"
        class="btn btn-delete-task">
         Delete task
     </a>
     {% endif %}
+    {% endif %}
     
 </div>
 
 </div>
+
+<div data-open-time-modal="{{ open_time_modal }}"></div>
+{% if not time_unavailable_reason %}
+<div class="modal fade" id="recordTimeModal" tabindex="-1" aria-labelledby="recordTimeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold text-dark" id="recordTimeModalLabel">Record Time Spent</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 pb-4 pt-3">
+        <p class="text-muted mb-4">Log the hours you spent working on <strong>{{ task.title }}</strong>.</p>
+        <form method="post" action="{% url 'backlog:record_task_time' task.id %}" class="work-session-form">
+          {% csrf_token %}
+          {% include "backlog/_work_session_form.html" with form=time_form submit_label="Record Time" %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if not time_unavailable_reason and not edit_time_unavailable_reason %}
+<div class="modal fade" id="editTimeModal" tabindex="-1" aria-labelledby="editTimeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+        <h4 class="modal-title fw-bold text-dark" id="editTimeModalLabel">Edit Time Spent</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 pb-4 pt-3">
+        <p class="text-muted mb-4">Update your logged hours for this task.</p>
+        <form method="post" action="{% if editing_session %}{% url 'backlog:edit_task_time' task.id editing_session.id %}{% endif %}" class="work-session-form">
+          {% csrf_token %}
+          {% include "backlog/_work_session_form.html" with form=edit_time_form submit_label="Save Changes" %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% if time_form.errors and time_unavailable_reason or edit_time_form.errors and edit_time_unavailable_reason %}
+<div class="alert alert-danger" role="alert">{{ time_form.errors }}{{ edit_time_form.errors }}</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/task_time.js' %}"></script>
 {% endblock %}

@@ -2,110 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from .models import Task, Tag, Sprint
-
-
-class ProductBacklogTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username="backlog_reader")
-        self.client.force_login(self.user)
-
-        self.tag_ui = Tag.objects.create(name="UI")
-        self.tag_ux = Tag.objects.create(name="UX")
-        self.tag_fe = Tag.objects.create(name="Front-end")
-
-        self.sprint1 = Sprint.objects.create(
-            name="Sprint 1",
-            status="completed",
-        )
-
-        self.sprint2 = Sprint.objects.create(
-            name="Sprint 2",
-            status="active",
-        )
-
-        self.task1 = Task.objects.create(
-            title="Task 1",
-            item_type="story",
-            priority="low",
-            story_points=3,
-        )
-
-        self.task1.tags.add(
-            self.tag_ui,
-            self.tag_ux,
-        )
-
-        self.task2 = Task.objects.create(
-            title="Task 2",
-            item_type="story",
-            priority="urgent",
-            story_points=10,
-        )
-
-        self.task2.tags.add(self.tag_fe)
-
-    def test_backlog_view_status_code(self):
-        url = reverse("backlog:product_backlog")
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
-        self.assertTemplateUsed(
-            response,
-            "backlog/product_backlog.html",
-        )
-
-    def test_backlog_tasks_in_context(self):
-        url = reverse("backlog:product_backlog")
-        response = self.client.get(url)
-
-        self.assertEqual(
-            response.context["total_items"],
-            2,
-        )
-
-        self.assertEqual(
-            response.context["total_points"],
-            13,
-        )
-
-    def test_tag_filtering(self):
-        url = (
-            reverse("backlog:product_backlog")
-            + "?tag=Front-end"
-        )
-
-        response = self.client.get(url)
-        tasks = response.context["tasks"]
-
-        self.assertEqual(len(tasks), 1)
-        self.assertEqual(tasks[0].title, "Task 2")
-
-    def test_priority_sorting_urgent_first(self):
-        url = (
-            reverse("backlog:product_backlog")
-            + "?sort=priority_desc"
-        )
-
-        response = self.client.get(url)
-        tasks = list(response.context["tasks"])
-
-        self.assertEqual(tasks[0].title, "Task 2")
-        self.assertEqual(tasks[1].title, "Task 1")
-
-    def test_priority_sorting_lowest_first(self):
-        url = (
-            reverse("backlog:product_backlog")
-            + "?sort=priority_asc"
-        )
-
-        response = self.client.get(url)
-        tasks = list(response.context["tasks"])
-
-        self.assertEqual(tasks[0].title, "Task 1")
-        self.assertEqual(tasks[1].title, "Task 2")
+from backlog.models import Task, Tag
 
 
 class CreateTaskTests(TestCase):
@@ -260,12 +157,11 @@ class CreateTaskTests(TestCase):
 
     def test_required_information_is_enforced(self):
         """
-        Required task information cannot be empty.
+        Required task information (title, description) cannot be empty.
         """
         invalid_data = self.valid_data.copy()
         invalid_data["title"] = ""
         invalid_data["description"] = ""
-        invalid_data["assignee"] = ""
 
         response = self.client.post(
             self.url,
@@ -277,8 +173,24 @@ class CreateTaskTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("title", form.errors)
         self.assertIn("description", form.errors)
-        self.assertIn("assignee", form.errors)
         self.assertEqual(Task.objects.count(), 0)
+
+    def test_create_task_with_empty_assignee(self):
+        """
+        Task assignee is optional and can be left empty.
+        """
+        data = self.valid_data.copy()
+        data["assignee"] = ""
+
+        response = self.client.post(
+            self.url,
+            data,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Task.objects.count(), 1)
+        task = Task.objects.first()
+        self.assertIsNone(task.assignee)
 
     def test_removed_fields_are_not_in_create_form(self):
         """

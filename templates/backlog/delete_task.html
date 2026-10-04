@@ -24,7 +24,7 @@
 
                 <div class="d-flex gap-2 mt-4">
 
-                    <a href="{% url 'backlog:task_detail' task.id %}"
+                    <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('delete_task_referer_{{ task.id }}') || '{% url 'backlog:task_detail' task.id %}';"
                        class="btn btn-outline-secondary">
                         Cancel
                     </a>
@@ -41,4 +41,13 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    var ref = document.referrer;
+    if (ref && !ref.includes('/delete') && !ref.includes('/edit') && !ref.includes('/new') && !ref.includes('/time') && !ref.includes('/assign/')) {
+        sessionStorage.setItem('delete_task_referer_{{ task.id }}', ref);
+    }
+</script>
 {% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ sprint.name }} | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('last_board_url') || '{% url "backlog:product_backlog" %}';" class="back-link d-inline-flex align-items-center gap-1 mb-3 text-decoration-none text-muted fw-medium">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 border-bottom pb-3">
+        <div>
+            <h1 class="create-title mb-1 fw-bold">{{ sprint.name }}</h1>
+            <p class="text-muted mb-0 fs-7">Created {{ sprint.created_at|date:"j M Y" }}</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge {{ sprint.status_badge_class }} rounded-pill px-3 py-2 fs-7 shadow-sm border">{{ sprint.get_status_display }}</span>
+            <div class="dropdown">
+                <button class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0;" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sprint Options">
+                    <i class="bi bi-three-dots-vertical text-dark fs-5"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm fs-7">
+                    {% if user.is_staff or user.is_superuser %}
+                        <li><a class="dropdown-item py-2" href="{% url 'backlog:edit_sprint' sprint.id %}?next={{ request.path|urlencode }}"><i class="bi bi-pencil-square me-2 text-muted"></i>Edit Sprint</a></li>
+                        <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Sprint Board</a></li>
+                        {% if sprint.status == 'stopped' or sprint.status == 'not_started' %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{% url 'backlog:delete_sprint' sprint.id %}"><i class="bi bi-trash3 me-2 text-danger"></i>Delete Sprint</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li>
+                            <button type="button" class="dropdown-item py-2 w-100 text-start" data-bs-toggle="modal" data-bs-target="#scrumMasterModal{{ sprint.id }}">
+                                <i class="bi bi-person-badge me-2 text-muted"></i>Select Scrum Master
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2 w-100 text-start" data-bs-toggle="modal" data-bs-target="#productOwnerModal{{ sprint.id }}">
+                                <i class="bi bi-person-check me-2 text-muted"></i>Select Product Owner
+                            </button>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Sprint Board</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <section class="detail-panel h-100" aria-labelledby="sprint-details-heading">
+                <h2 class="detail-panel-heading" id="sprint-details-heading">Sprint details</h2>
+                <div class="detail-field"><span class="detail-label">Start date:</span> {{ sprint.start_date|date:"j M Y"|default:"Not set" }}</div>
+                <div class="detail-field"><span class="detail-label">End date:</span> {{ sprint.end_date|date:"j M Y"|default:"Not set" }}</div>
+                <div class="detail-field mt-3">
+                    <span class="detail-label">Goal:</span>
+                    {% if sprint.goal %}
+                        <p class="mb-0 mt-1">{{ sprint.goal|linebreaksbr }}</p>
+                    {% else %}
+                        <p class="text-muted mb-0 mt-1">No goal set.</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-5">
+            <section class="detail-panel h-100" aria-labelledby="sprint-team-heading">
+                <h2 class="detail-panel-heading" id="sprint-team-heading">Sprint team</h2>
+                <div class="detail-field">
+                    <span class="detail-label">Product Owner:</span>
+                    {% if sprint.product_owner %}
+                        {{ sprint.product_owner.get_full_name|default:sprint.product_owner.username }}
+                    {% else %}
+                        Not assigned
+                    {% endif %}
+                </div>
+                <div class="detail-field">
+                    <span class="detail-label">Scrum Master:</span>
+                    {% if sprint.scrum_master %}
+                        {{ sprint.scrum_master.get_full_name|default:sprint.scrum_master.username }}
+                    {% else %}
+                        Not assigned
+                    {% endif %}
+                </div>
+
+                <h3 class="h6 fw-bold mt-3 mb-2">Team members</h3>
+                <ul class="list-group list-group-flush">
+                    {% for member in team_members %}
+                    <li class="list-group-item bg-transparent px-0">
+                        {{ member.get_full_name|default:member.username }}
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item bg-transparent px-0 text-muted">
+                        No team members assigned.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+    </div>
+
+    <section class="detail-panel mb-4" aria-labelledby="sprint-tasks-heading">
+        <h2 class="detail-panel-heading" id="sprint-tasks-heading">Sprint tasks</h2>
+        <div class="d-flex flex-wrap gap-3 mb-3 text-muted">
+            <span>{{ total_tasks }} tasks</span>
+            <span>{{ total_story_points }} story points</span>
+            <span>{{ total_accumulated_hours }} hours logged</span>
+            <span>{{ completed_tasks }} completed</span>
+            <span>{{ in_progress_tasks }} in progress</span>
+            <span>{{ not_started_tasks }} not started</span>
+        </div>
+
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 sprint-task-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Task</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Tags</th>
+                        <th scope="col">Priority</th>
+                        <th scope="col">Points</th>
+                        <th scope="col">Assignee</th>
+                        <th scope="col">Hours</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td><a href="{% url 'backlog:task_detail' task.id %}">{{ task.title }}</a></td>
+                        <td>{{ task.get_item_type_display }}</td>
+                        <td>
+                            {% for tag in task.tags.all %}
+                                {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                —
+                            {% endfor %}
+                        </td>
+                        <td>{{ task.get_priority_display }}</td>
+                        <td>{{ task.story_points }}</td>
+                        <td>
+                            {% if task.assignee %}
+                                {{ task.assignee.get_full_name|default:task.assignee.username }}
+                            {% else %}
+                                Unassigned
+                            {% endif %}
+                        </td>
+                        <td>{{ task.accumulated_hours }}</td>
+                        <td>{{ task.get_status_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No tasks are assigned to this sprint yet.</p>
+        {% endif %}
+
+        {% if can_edit_sprint %}
+        <div class="mt-3">
+            <a href="{% url 'backlog:sprint_backlog' sprint.id %}" class="text-decoration-none text-muted fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.95rem; transition: color 0.2s ease;" onmouseover="this.classList.remove('text-muted'); this.classList.add('text-primary');" onmouseout="this.classList.remove('text-primary'); this.classList.add('text-muted');">
+                + Add / Manage tasks
+            </a>
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="detail-panel" aria-labelledby="sprint-history-heading">
+        <h2 class="detail-panel-heading" id="sprint-history-heading"><i class="bi bi-journal-text me-2 text-secondary"></i>History</h2>
+        {% for entry in history %}
+        <div class="history-entry position-relative ps-3 py-2 border-bottom d-grid align-items-center" style="grid-template-columns: 220px 1fr auto; gap: 1.5rem; border-left: 2px solid #cbd5e1;">
+            <div class="history-timestamp text-muted fs-8 text-nowrap text-start">
+                <i class="bi bi-calendar3 me-1"></i>{{ entry.timestamp|date:"j M Y, g:i A" }}
+            </div>
+            <div class="history-description text-dark fw-medium fs-7 text-start" style="text-align: left !important;">
+                {{ entry.description }}
+            </div>
+            <div class="history-author text-muted fs-8 text-nowrap text-end">
+                {% if entry.changed_by %}
+                    <i class="bi bi-person me-1"></i>Author: {{ entry.changed_by.get_full_name|default:entry.changed_by.username }}
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted mb-0">No history recorded yet.</p>
+        {% endfor %}
+    </section>
+</div>
+
+<!-- Scrum Master Modal -->
+<div class="modal fade" id="scrumMasterModal{{ sprint.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fs-6 fw-bold">Select Scrum Master</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'backlog:assign_sprint_role' sprint.id 'scrum_master' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <select name="user_id" class="form-select shadow-none">
+                            <option value="" disabled selected>Choose a team member...</option>
+                            {% for member in sprint.team_members.all %}
+                                {% if not member.is_superuser and member != sprint.product_owner %}
+                                    <option value="{{ member.id }}" {% if sprint.scrum_master == member %}selected{% endif %}>{{ member.get_full_name|default:member.username }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Owner Modal -->
+<div class="modal fade" id="productOwnerModal{{ sprint.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fs-6 fw-bold">Select Product Owner</h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'backlog:assign_sprint_role' sprint.id 'product_owner' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <select name="user_id" class="form-select shadow-none">
+                            <option value="" disabled selected>Choose a team member...</option>
+                            {% for member in sprint.team_members.all %}
+                                {% if not member.is_superuser and member != sprint.scrum_master %}
+                                    <option value="{{ member.id }}" {% if sprint.product_owner == member %}selected{% endif %}>{{ member.get_full_name|default:member.username }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

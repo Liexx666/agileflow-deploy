@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Sprint | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container create-task-page px-4">
+    <a href="{% url 'backlog:product_backlog' %}" class="back-link">
+        ← Back
+    </a>
+
+    <h1 class="create-title mt-2">Create new sprint</h1>
+    <p class="text-muted">Set the sprint dates, responsibilities and team.</p>
+
+    <form method="post" class="task-form-card shadow-sm" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger m-4">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <section class="form-section">
+            <h2>Sprint details</h2>
+
+            {% for field in form %}
+                {% if field.name == 'team_members' %}
+                <fieldset class="mb-4">
+                    <legend class="form-label">
+                        {{ field.label }}
+                        {% if field.field.required %}<span>*</span>{% endif %}
+                    </legend>
+                    <div class="tag-checkboxes">{{ field }}</div>
+
+                    {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </fieldset>
+                {% else %}
+                <div class="mb-4">
+                    <label class="form-label" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}<span>*</span>{% endif %}
+                    </label>
+                    {{ field }}
+
+                    {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            <p class="form-text mb-0">
+                A new sprint starts with the status “Not Started”.
+            </p>
+        </section>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary"
+               href="{% url 'backlog:product_backlog' %}">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-create-submit">
+                Create sprint
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from backlog.models import Tag, Sprint, Task
+from backlog.models import Tag, Sprint, Task, SprintHistory
 
 
 class Command(BaseCommand):
@@ -45,6 +45,7 @@ class Command(BaseCommand):
         user_ethan = user_objs['ethan']
         user_siddharth = user_objs['siddharth']
         user_yaoxing = user_objs['yaoxing']
+        admin_user = User.objects.filter(is_superuser=True).first() or user_chloe
 
         # 2. Create Tags
         tags_data = [
@@ -55,10 +56,103 @@ class Command(BaseCommand):
             t, _ = Tag.objects.get_or_create(name=tag_name)
             tag_objs[tag_name] = t
 
-        # 3. Create Sprints matching mockup
-        sprint1, _ = Sprint.objects.get_or_create(name='Sprint 1', defaults={'status': 'completed', 'goal': 'Project Inception & Planning'})
-        sprint2, _ = Sprint.objects.get_or_create(name='Sprint 2', defaults={'status': 'completed', 'goal': 'Architecture & Spikes'})
-        sprint3, _ = Sprint.objects.get_or_create(name='Sprint 3', defaults={'status': 'active', 'goal': 'Sprint 1 Walking Skeleton'})
+        # 3. Create Sprints matching mockup with proper required dates (US-12 compliant)
+        import datetime
+        today = datetime.date.today()
+        
+        sprint1, _ = Sprint.objects.get_or_create(
+            name='Sprint 1',
+            defaults={
+                'status': 'completed',
+                'start_date': today - datetime.timedelta(days=28),
+                'end_date': today - datetime.timedelta(days=15),
+                'goal': 'Project Inception & Planning',
+                'product_owner': user_chloe,
+                'scrum_master': user_hiromu,
+            }
+        )
+        sprint1.start_date = sprint1.start_date or (today - datetime.timedelta(days=28))
+        sprint1.end_date = sprint1.end_date or (today - datetime.timedelta(days=15))
+        sprint1.product_owner = sprint1.product_owner or user_chloe
+        sprint1.scrum_master = sprint1.scrum_master or user_hiromu
+        sprint1.save()
+        sprint1.team_members.set([user_ethan, user_siddharth, user_yaoxing])
+        if not sprint1.history.exists():
+            from django.utils import timezone
+            t1 = timezone.now() - datetime.timedelta(days=28)
+            t2 = timezone.now() - datetime.timedelta(days=27)
+            t3 = timezone.now() - datetime.timedelta(days=15)
+            h1 = SprintHistory.objects.create(sprint=sprint1, changed_by=admin_user, description="Admin created sprint 'Sprint 1' with status 'Not Started'")
+            h1.timestamp = t1; h1.save(update_fields=['timestamp'])
+            h2 = SprintHistory.objects.create(sprint=sprint1, changed_by=admin_user, description=f"Admin assigned {user_chloe.get_full_name()} as Product Owner")
+            h2.timestamp = t1; h2.save(update_fields=['timestamp'])
+            h3 = SprintHistory.objects.create(sprint=sprint1, changed_by=admin_user, description=f"Admin assigned {user_hiromu.get_full_name()} as Scrum Master")
+            h3.timestamp = t1; h3.save(update_fields=['timestamp'])
+            h4 = SprintHistory.objects.create(sprint=sprint1, changed_by=admin_user, description="Admin assigned Ethan Tiang Yong Xuan, Siddharth, Li YaoXing to Sprint 1")
+            h4.timestamp = t1; h4.save(update_fields=['timestamp'])
+            h5 = SprintHistory.objects.create(sprint=sprint1, changed_by=admin_user, description="Admin updated status to 'Completed'")
+            h5.timestamp = t3; h5.save(update_fields=['timestamp'])
+
+        sprint2, _ = Sprint.objects.get_or_create(
+            name='Sprint 2',
+            defaults={
+                'status': 'completed',
+                'start_date': today - datetime.timedelta(days=14),
+                'end_date': today - datetime.timedelta(days=1),
+                'goal': 'Architecture & Spikes',
+                'product_owner': user_chloe,
+                'scrum_master': user_ethan,
+            }
+        )
+        sprint2.start_date = sprint2.start_date or (today - datetime.timedelta(days=14))
+        sprint2.end_date = sprint2.end_date or (today - datetime.timedelta(days=1))
+        sprint2.product_owner = sprint2.product_owner or user_chloe
+        sprint2.scrum_master = sprint2.scrum_master or user_ethan
+        sprint2.save()
+        sprint2.team_members.set([user_hiromu, user_siddharth, user_yaoxing])
+        if not sprint2.history.exists():
+            from django.utils import timezone
+            t1 = timezone.now() - datetime.timedelta(days=14)
+            t2 = timezone.now() - datetime.timedelta(days=1)
+            h1 = SprintHistory.objects.create(sprint=sprint2, changed_by=admin_user, description="Admin created sprint 'Sprint 2' with status 'Not Started'")
+            h1.timestamp = t1; h1.save(update_fields=['timestamp'])
+            h2 = SprintHistory.objects.create(sprint=sprint2, changed_by=admin_user, description=f"Admin assigned {user_chloe.get_full_name()} as Product Owner")
+            h2.timestamp = t1; h2.save(update_fields=['timestamp'])
+            h3 = SprintHistory.objects.create(sprint=sprint2, changed_by=admin_user, description=f"Admin assigned {user_ethan.get_full_name()} as Scrum Master")
+            h3.timestamp = t1; h3.save(update_fields=['timestamp'])
+            h4 = SprintHistory.objects.create(sprint=sprint2, changed_by=admin_user, description="Admin assigned Hiromu Tao, Siddharth, Li YaoXing to Sprint 2")
+            h4.timestamp = t1; h4.save(update_fields=['timestamp'])
+            h5 = SprintHistory.objects.create(sprint=sprint2, changed_by=admin_user, description="Admin updated status to 'Completed'")
+            h5.timestamp = t2; h5.save(update_fields=['timestamp'])
+
+        sprint3, _ = Sprint.objects.get_or_create(
+            name='Sprint 3',
+            defaults={
+                'status': 'active',
+                'start_date': today,
+                'end_date': today + datetime.timedelta(days=13),
+                'goal': 'Sprint 2 Core Features & Testing',
+                'product_owner': user_chloe,
+                'scrum_master': user_siddharth,
+            }
+        )
+        sprint3.start_date = sprint3.start_date or today
+        sprint3.end_date = sprint3.end_date or (today + datetime.timedelta(days=13))
+        sprint3.product_owner = sprint3.product_owner or user_chloe
+        sprint3.scrum_master = sprint3.scrum_master or user_siddharth
+        sprint3.save()
+        sprint3.team_members.set([user_hiromu, user_ethan, user_yaoxing])
+        if not sprint3.history.filter(description__contains="created").exists():
+            from django.utils import timezone
+            t1 = timezone.now() - datetime.timedelta(days=3)
+            h1 = SprintHistory.objects.create(sprint=sprint3, changed_by=admin_user, description="Admin created sprint 'Sprint 3' with status 'Not Started'")
+            h1.timestamp = t1; h1.save(update_fields=['timestamp'])
+            h2 = SprintHistory.objects.create(sprint=sprint3, changed_by=admin_user, description=f"Admin assigned {user_chloe.get_full_name()} as Product Owner")
+            h2.timestamp = t1; h2.save(update_fields=['timestamp'])
+            h3 = SprintHistory.objects.create(sprint=sprint3, changed_by=admin_user, description="Admin assigned Hiromu Tao, Ethan Tiang Yong Xuan, Li YaoXing to Sprint 3")
+            h3.timestamp = t1; h3.save(update_fields=['timestamp'])
+            h4 = SprintHistory.objects.create(sprint=sprint3, changed_by=admin_user, description="Admin updated status to 'Active'")
+            h4.timestamp = t1; h4.save(update_fields=['timestamp'])
 
         # 4. Check if tasks already exist to prevent wiping user data
         if Task.objects.exists() and not options.get('force'):
@@ -77,6 +171,7 @@ class Command(BaseCommand):
             item_type='story',
             priority='low',
             story_points=3,
+            accumulated_hours=4.5,
             stage='development',
             status='in_progress',
             assignee=user_chloe,
@@ -92,6 +187,7 @@ class Command(BaseCommand):
             item_type='story',
             priority='urgent',
             story_points=10,
+            accumulated_hours=8.0,
             stage='development',
             status='not_started',
             assignee=user_hiromu,
@@ -107,6 +203,7 @@ class Command(BaseCommand):
             item_type='story',
             priority='important',
             story_points=5,
+            accumulated_hours=3.5,
             stage='planning',
             status='not_started',
             assignee=user_ethan,
@@ -121,6 +218,7 @@ class Command(BaseCommand):
             item_type='story',
             priority='medium',
             story_points=2,
+            accumulated_hours=1.5,
             stage='development',
             status='not_started',
             assignee=user_siddharth,
@@ -135,6 +233,7 @@ class Command(BaseCommand):
             item_type='bug',
             priority='low',
             story_points=1,
+            accumulated_hours=0.5,
             stage='testing',
             status='not_started',
             assignee=user_yaoxing,

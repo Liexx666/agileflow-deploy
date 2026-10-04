@@ -5,9 +5,9 @@
 {% block content %}
 <div class="container create-task-page px-4">
 
-    <a href="{% url 'backlog:task_detail' task.id %}"
+    <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('edit_task_referer_{{ task.id }}') || '{% url 'backlog:task_detail' task.id %}';"
        class="back-link">
-        ← Back to Task
+        ← Back
     </a>
 
     <h1 class="create-title mt-2">Edit Task</h1>
@@ -108,7 +108,7 @@
 
                 <label class="form-label"
                        for="{{ form.assignee.id_for_label }}">
-                    Assignee <span>*</span>
+                    Assignee
                 </label>
 
                 {{ form.assignee }}
@@ -169,7 +169,7 @@
         <div class="form-actions">
 
             <a class="btn btn-outline-secondary"
-               href="{% url 'backlog:task_detail' task.id %}">
+               href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('edit_task_referer_{{ task.id }}') || '{% url 'backlog:task_detail' task.id %}';">
                 Cancel
             </a>
 
@@ -183,4 +183,12 @@
     </form>
 
 </div>
+{% block extra_js %}
+<script>
+    var ref = document.referrer;
+    if (ref && !ref.includes('/edit') && !ref.includes('/new') && !ref.includes('/time') && !ref.includes('/assign/')) {
+        sessionStorage.setItem('edit_task_referer_{{ task.id }}', ref);
+    }
+</script>
+{% endblock %}
 {% endblock %}

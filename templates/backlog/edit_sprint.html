@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Sprint | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container create-task-page px-4">
+    <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('edit_sprint_referer_{{ sprint.id }}') || '{% url 'backlog:sprint_detail' sprint.id %}';" class="back-link">
+        ← Back
+    </a>
+
+    <h1 class="create-title mt-2">Edit sprint</h1>
+    <p class="text-muted">Update {{ sprint.name }} and its team details.</p>
+
+    <form method="post" class="task-form-card shadow-sm" action="{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" novalidate>
+        {% csrf_token %}
+        {% if next_url %}
+        <input type="hidden" name="next" value="{{ next_url }}">
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger m-4">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <section class="form-section">
+            <h2>Sprint details</h2>
+
+            {% for field in form %}
+                {% if field.name == 'team_members' %}
+                <fieldset class="mb-4">
+                    <legend class="form-label">
+                        {{ field.label }}
+                        {% if field.field.required %}<span>*</span>{% endif %}
+                    </legend>
+                    <div class="tag-checkboxes">{{ field }}</div>
+
+                    {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </fieldset>
+                {% else %}
+                <div class="mb-4">
+                    <label class="form-label" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}<span>*</span>{% endif %}
+                    </label>
+                    {{ field }}
+
+                    {% for error in field.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </section>
+
+        <div class="form-actions">
+            <a class="btn btn-outline-secondary"
+               href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('edit_sprint_referer_{{ sprint.id }}') || '{% url 'backlog:sprint_detail' sprint.id %}';">
+                Cancel
+            </a>
+            <button type="submit" class="btn btn-create-submit">
+                Save changes
+            </button>
+        </div>
+    </form>
+</div>
+{% block extra_js %}
+<script>
+    var ref = document.referrer;
+    if (ref && !ref.includes('/edit') && !ref.includes('/new') && !ref.includes('/time') && !ref.includes('/assign/')) {
+        sessionStorage.setItem('edit_sprint_referer_{{ sprint.id }}', ref);
+    }
+</script>
+{% endblock %}
+{% endblock %}

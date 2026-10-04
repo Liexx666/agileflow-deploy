@@ -4,9 +4,9 @@
 
 {% block content %}
 <div class="container create-task-page px-4">
-    <a href="{% url 'backlog:product_backlog' %}"
+    <a href="{{ backlog_return_url }}"
        class="back-link">
-        ← Product Backlog
+        ← Back
     </a>
 
     <h1 class="create-title mt-2">Create new task</h1>
@@ -124,7 +124,7 @@
             <div class="mt-4">
                 <label class="form-label"
                        for="{{ form.assignee.id_for_label }}">
-                    Assignee <span>*</span>
+                    Assignee
                 </label>
 
                 {{ form.assignee }}
@@ -196,7 +196,7 @@
 
         <div class="form-actions">
             <a class="btn btn-outline-secondary"
-               href="{% url 'backlog:product_backlog' %}">
+               href="{{ backlog_return_url }}">
                 Cancel
             </a>
 
