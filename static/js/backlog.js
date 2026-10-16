@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let draggedTaskId = null;
     const manager = document.querySelector('[data-backlog-manager]');
     const draggableTasks = manager?.querySelectorAll('[draggable="true"][data-task-id]') || [];
-    const dropzones = manager?.querySelectorAll('.dropzone[data-can-drop="true"]') || [];
+    const dropzones = manager?.querySelectorAll('.dropzone') || [];
 
     draggableTasks.forEach((taskEl) => {
         taskEl.addEventListener('dragstart', (e) => {
@@ -85,10 +85,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.dataTransfer.clearData();
             e.dataTransfer.setData('text/plain', draggedTaskId);
 
-            // Highlight valid drop zones (not completed or stopped sprints)
+            // Highlight valid drop zones (not completed or cancelled sprints)
             dropzones.forEach((dropzone) => {
                 const status = dropzone.dataset.status;
-                if (status !== 'completed' && status !== 'stopped') {
+                if (status !== 'completed' && status !== 'stopped' && status !== 'cancelled') {
                     dropzone.classList.add('sprint-drop-active');
                 }
             });
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         taskEl.addEventListener('dragend', () => {
             taskEl.classList.remove('is-dragging');
             dropzones.forEach((dropzone) => {
-                dropzone.classList.remove('sprint-drop-active', 'sprint-drop-hover');
+                dropzone.classList.remove('sprint-drop-active', 'sprint-drop-hover', 'sprint-drop-blocked');
             });
             draggedTaskId = null;
         });
@@ -108,41 +108,49 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
         });
-        dropzone.addEventListener('dragover', (e) => {
-            const status = dropzone.dataset.status;
-            if (status === 'completed' || status === 'stopped') return; // Cannot drop into completed/stopped sprints
 
+        dropzone.addEventListener('dragover', (e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            dropzone.classList.add('sprint-drop-hover');
+
+            const status = dropzone.dataset.status;
+            if (status === 'completed' || status === 'stopped' || status === 'cancelled') {
+                dropzone.classList.add('sprint-drop-blocked');
+                dropzone.classList.remove('sprint-drop-hover');
+            } else {
+                dropzone.classList.add('sprint-drop-hover');
+                dropzone.classList.remove('sprint-drop-blocked');
+            }
         });
 
         dropzone.addEventListener('dragleave', (e) => {
             if (!dropzone.contains(e.relatedTarget)) {
-                dropzone.classList.remove('sprint-drop-hover');
+                dropzone.classList.remove('sprint-drop-hover', 'sprint-drop-blocked');
             }
         });
 
         dropzone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropzone.classList.remove('sprint-drop-hover', 'sprint-drop-active');
+            e.stopPropagation();
+            dropzone.classList.remove('sprint-drop-hover', 'sprint-drop-active', 'sprint-drop-blocked');
 
-            const taskId = draggedTaskId || e.dataTransfer.getData('text/plain');
             const sprintId = dropzone.dataset.sprintId || ""; // empty if product backlog
             const sprintStatus = dropzone.dataset.status;
 
-            if (!taskId) return;
-
-            if (sprintStatus === 'completed' || sprintStatus === 'stopped') {
-                alert(`Tasks cannot be moved into a ${sprintStatus} Sprint.`);
+            if (sprintStatus === 'completed' || sprintStatus === 'stopped' || sprintStatus === 'cancelled') {
+                const displayStatus = (sprintStatus === 'stopped' || sprintStatus === 'cancelled') ? 'Cancelled' : 'Completed';
+                alert(`Tasks cannot be moved into a ${displayStatus} Sprint.`);
                 return;
             }
+
+            const taskId = draggedTaskId || e.dataTransfer.getData('text/plain');
+            if (!taskId) return;
 
             performMoveTask(taskId, sprintId, null);
         });
     });
 
-    function performMoveTask(taskId, sprintId, assigneeAction) {
+    function performMoveTask(taskId, sprintId, assigneeAction, newAssigneeId = null) {
         const activeCsrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
         const formData = new FormData();
         formData.append('sprint_id', sprintId);
@@ -151,6 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (assigneeAction) {
             formData.append('assignee_action', assigneeAction);
+        }
+        if (newAssigneeId) {
+            formData.append('new_assignee_id', newAssigneeId);
         }
 
         fetch(`/tasks/${taskId}/move/`, {
@@ -170,13 +181,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data && data.needs_assignee_decision) {
                     const modalEl = document.getElementById('assigneeDecisionModal');
                     if (modalEl) {
+                        const step1 = document.getElementById('assigneeDecisionStep1');
+                        const step2 = document.getElementById('assigneeDecisionStep2');
+                        const footer1 = document.getElementById('assigneeFooterStep1');
+                        const footer2 = document.getElementById('assigneeFooterStep2');
+                        const titleIcon = document.getElementById('assigneeModalTitleIcon');
+                        const titleText = document.getElementById('assigneeModalTitleText');
+
+                        const resetToStep1 = () => {
+                            if (step1) step1.classList.remove('d-none');
+                            if (step2) step2.classList.add('d-none');
+                            if (footer1) footer1.classList.remove('d-none');
+                            if (footer2) footer2.classList.add('d-none');
+                            if (titleIcon) titleIcon.className = 'bi bi-person-exclamation text-warning me-2';
+                            if (titleText) titleText.textContent = 'Assignee Not in Sprint';
+                        };
+                        resetToStep1();
+
                         document.getElementById('assigneeModalName').textContent = data.assignee_name;
                         document.getElementById('assigneeModalNamePrompt').textContent = data.assignee_name;
                         document.getElementById('assigneeModalSprint').textContent = data.sprint_name;
 
+                        // Step 2 elements
+                        const reassignOldName = document.getElementById('assigneeReassignOldName');
+                        if (reassignOldName) reassignOldName.textContent = data.assignee_name;
+                        const reassignSprint = document.getElementById('assigneeReassignSprint');
+                        if (reassignSprint) reassignSprint.textContent = data.sprint_name;
+
+                        // Populate select options
+                        const selectEl = document.getElementById('selectNewSprintAssignee');
+                        if (selectEl) {
+                            selectEl.innerHTML = '<option value="">-- Unassigned (Leave without assignee) --</option>';
+                            const members = data.sprint_members || [];
+                            const emptyNote = document.getElementById('sprintMembersEmptyNote');
+                            if (members.length === 0) {
+                                if (emptyNote) emptyNote.classList.remove('d-none');
+                            } else {
+                                if (emptyNote) emptyNote.classList.add('d-none');
+                                members.forEach(m => {
+                                    const opt = document.createElement('option');
+                                    opt.value = m.id;
+                                    opt.textContent = m.name + (m.username && m.username !== m.name ? ` (${m.username})` : '');
+                                    selectEl.appendChild(opt);
+                                });
+                            }
+                        }
+
                         const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
                         const btnAdd = document.getElementById('btnAddAssigneeToSprint');
                         const btnRemove = document.getElementById('btnRemoveAssignee');
+                        const btnBack = document.getElementById('btnBackToStep1');
+                        const btnConfirm = document.getElementById('btnConfirmNewAssignee');
 
                         const handleAdd = () => {
                             cleanup();
@@ -185,18 +240,39 @@ document.addEventListener('DOMContentLoaded', () => {
                         };
 
                         const handleRemove = () => {
+                            // Show Step 2 to allow choosing a new assignee from the team members in the sprint
+                            if (step1) step1.classList.add('d-none');
+                            if (step2) step2.classList.remove('d-none');
+                            if (footer1) footer1.classList.add('d-none');
+                            if (footer2) footer2.classList.remove('d-none');
+                            if (titleIcon) titleIcon.className = 'bi bi-person-gear text-primary me-2';
+                            if (titleText) titleText.textContent = `Choose Assignee for ${data.sprint_name}`;
+                        };
+
+                        const handleBack = () => {
+                            resetToStep1();
+                        };
+
+                        const handleConfirm = () => {
+                            const chosenAssigneeId = selectEl ? selectEl.value : '';
                             cleanup();
                             bsModal.hide();
-                            performMoveTask(taskId, sprintId, 'remove_assignee');
+                            performMoveTask(taskId, sprintId, 'remove_assignee', chosenAssigneeId || null);
                         };
 
                         const cleanup = () => {
-                            btnAdd.removeEventListener('click', handleAdd);
-                            btnRemove.removeEventListener('click', handleRemove);
+                            if (btnAdd) btnAdd.removeEventListener('click', handleAdd);
+                            if (btnRemove) btnRemove.removeEventListener('click', handleRemove);
+                            if (btnBack) btnBack.removeEventListener('click', handleBack);
+                            if (btnConfirm) btnConfirm.removeEventListener('click', handleConfirm);
+                            modalEl.removeEventListener('hidden.bs.modal', resetToStep1);
                         };
 
-                        btnAdd.addEventListener('click', handleAdd);
-                        btnRemove.addEventListener('click', handleRemove);
+                        if (btnAdd) btnAdd.addEventListener('click', handleAdd);
+                        if (btnRemove) btnRemove.addEventListener('click', handleRemove);
+                        if (btnBack) btnBack.addEventListener('click', handleBack);
+                        if (btnConfirm) btnConfirm.addEventListener('click', handleConfirm);
+                        modalEl.addEventListener('hidden.bs.modal', resetToStep1);
 
                         bsModal.show();
                     } else {
@@ -210,8 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 if (data && data.errors) {
-                    const errorMsg = data.errors?.task?.[0] || data.errors?.sprint_id?.[0] || data.errors?.non_field_errors?.[0] || 'Validation error';
-                    alert('Could not move task: ' + errorMsg);
+                    const errorMsg = data.errors?.task?.[0] || data.errors?.sprint_id?.[0] || data.errors?.assignee?.[0] || data.errors?.non_field_errors?.[0] || 'Validation error';
+                    alert(errorMsg);
                 } else if (res.status === 403) {
                     alert('Permission denied or CSRF token expired. Please refresh the page.');
                 } else {

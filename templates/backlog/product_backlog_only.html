@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | AgileFlow{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-2 px-sm-3 px-md-4" data-backlog-manager>
+    <div class="d-flex border-bottom mb-4 flex-nowrap overflow-x-auto pb-1" style="scrollbar-width: none;">
+        <a href="{% url 'backlog:product_backlog' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light text-nowrap" style="margin-bottom: -2px;">
+            Sprint Board
+        </a>
+        <a href="{% url 'backlog:product_backlog_only' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-primary border-bottom border-primary border-2 text-nowrap" style="margin-bottom: -2px;">
+            Product Backlog
+        </a>
+        {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'accounts:admin_dashboard' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light text-nowrap" style="margin-bottom: -2px;">
+            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+        </a>
+        {% endif %}
+    </div>
+    <div class="backlog-layout">
+        <!-- ========================================================= -->
+        <!-- MAIN WORKSPACE: Standalone Product Backlog                -->
+        <!-- ========================================================= -->
+        <section class="backlog-content w-100">
+            
+            <!-- Backlog Top Controls Toolbar -->
+            <form method="GET" action="{{ backlog_url }}" id="filterForm">
+                <div class="backlog-header">
+                    <div>
+                        <h1 class="backlog-title">{{ page_title }}</h1>
+                        <div class="text-muted fs-7 mt-1">
+                            <span class="fw-semibold text-dark">{{ total_items }}</span> total items &bull; 
+                            <span class="fw-semibold text-dark">{{ total_points }}</span> story points &bull; 
+                            <span class="badge bg-primary-subtle text-primary">{{ story_count }} Stories</span>
+                            <span class="badge bg-danger-subtle text-danger">{{ bug_count }} Bugs</span>
+                        </div>
+                    </div>
+
+                    <div class="controls-toolbar">
+                        <!-- Sort Dropdown -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="sortSelect" class="fw-bold text-dark mb-0 fs-7">Sort by:</label>
+                            <select name="sort" id="sortSelect" class="form-select form-select-sm sort-select" onchange="this.form.submit()">
+                                <option value="priority_desc" {% if sort_by == 'priority_desc' or sort_by == 'urgent_to_lowest' %}selected{% endif %}>
+                                    Priority: Urgent to Low
+                                </option>
+                                <option value="priority_asc" {% if sort_by == 'priority_asc' or sort_by == 'lowest_to_urgent' %}selected{% endif %}>
+                                    Priority: Low to Urgent
+                                </option>
+                                <option value="created_desc" {% if sort_by == 'created_desc' or sort_by == 'recent_to_oldest' %}selected{% endif %}>
+                                    Date: Recent to Oldest
+                                </option>
+                                <option value="created_asc" {% if sort_by == 'created_asc' or sort_by == 'oldest_to_recent' %}selected{% endif %}>
+                                    Date: Oldest to Recent
+                                </option>
+                            </select>
+                        </div>
+
+                        <!-- Tag Filter Dropdown Button -->
+                        <div class="dropdown">
+                            <button class="filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                                <i class="bi bi-funnel-fill text-dark"></i> Filter task
+                                {% if selected_tags %}
+                                    <span class="badge bg-primary rounded-pill ms-1">{{ selected_tags|length }}</span>
+                                {% endif %}
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg" style="min-width: 240px;">
+                                <h6 class="dropdown-header px-0 text-dark fw-bold mb-2">Filter by tags</h6>
+                                {% for tag in all_tags %}
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input" type="checkbox" name="tag" value="{{ tag.name }}" id="tag-{{ tag.id }}" {% if tag.name in selected_tags %}checked{% endif %}>
+                                        <label class="form-check-label fs-8" for="tag-{{ tag.id }}">
+                                            {{ tag.name }}
+                                        </label>
+                                    </div>
+                                {% empty %}
+                                    <p class="text-muted fs-8 mb-2">No tags available</p>
+                                {% endfor %}
+                                <div class="d-flex justify-content-between pt-2 border-top mt-2">
+                                    <a href="{{ backlog_url }}" class="btn btn-sm btn-link text-decoration-none px-0 text-muted">Clear</a>
+                                    <button type="submit" class="btn btn-sm btn-primary px-3">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- View Toggle Switch -->
+                        <div class="view-toggle-wrapper d-flex align-items-center gap-2" title="Toggle between List View and Card View">
+                            <span class="view-toggle-label" id="viewLabelCard">Card View</span>
+                            <label class="view-toggle-switch" for="viewToggle" aria-label="Toggle card view">
+                                <input type="checkbox" id="viewToggle">
+                                <span class="view-toggle-track">
+                                    <span class="view-toggle-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Create New Task Button -->
+                        <a href="{% url 'backlog:create_task' %}" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 shadow-sm px-3 ms-1" id="createTaskHeaderBtn">
+                            <i class="bi bi-plus-lg"></i> Create new task
+                        </a>
+                    </div>
+                </div>
+            </form>
+
+            <div class="w-100 p-0">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 pe-3">
+                    <h2 class="sidebar-title mb-0">Product Backlog Items</h2>
+                    {% if user.is_staff or user.is_superuser %}
+                    <a href="{% url 'backlog:deleted_tasks' %}" class="btn btn-sm deleted-tasks-link d-inline-flex align-items-center gap-1 me-2">
+                        <i class="bi bi-trash3 me-1"></i>Deleted Tasks
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- LIST VIEW -->
+                <div class="list-view-container overflow-x-auto pb-2" style="scrollbar-width: thin;">
+                    <div style="min-width: 600px;">
+                        <div class="backlog-list-header mb-1 text-uppercase text-muted" style="grid-template-columns: 1fr 180px 140px 100px; font-size: 0.75rem;">
+                            <div>Task name</div>
+                            <div class="text-center">Tags</div>
+                            <div class="text-center">Priority</div>
+                            <div class="text-center">Pts</div>
+                        </div>
+
+                        <div class="backlog-items-wrapper">
+                            {% for task in tasks %}
+                            <div class="backlog-task-row bg-white border rounded shadow-sm mb-2" style="grid-template-columns: 1fr 180px 140px 100px;">
+                                <a href="{% url 'backlog:task_detail' task.id %}" class="task-name-box border-0 text-decoration-none shadow-none align-items-center" style="min-width: 0;" title="{{ task.title }}">
+                                    <div class="d-flex align-items-center gap-2 w-100" style="min-width: 0;">
+                                        {% if task.item_type == 'bug' %}
+                                            <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-8 fw-bold flex-shrink-0">Bug</span>
+                                        {% else %}
+                                            <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-8 fw-bold flex-shrink-0">Story</span>
+                                        {% endif %}
+                                        <span class="task-title-text text-truncate">{{ task.title }}</span>
+                                    </div>
+                                    {% if task.assignee %}
+                                    <span class="badge bg-light text-secondary border rounded-pill fs-8 flex-shrink-0 ms-2">
+                                        <i class="bi bi-person me-1"></i>{{ task.assignee.get_full_name|default:task.assignee.username }}
+                                    </span>
+                                    {% endif %}
+                                </a>
+
+                                <div class="tags-box fs-8 d-flex align-items-center justify-content-center px-1" style="min-width: 0;">
+                                    <span class="text-truncate w-100 text-center">
+                                        {% for tag in task.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-muted font-italic">No tags</span>{% endfor %}
+                                    </span>
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="priority-box {{ task.priority }} fs-8 w-100" style="min-height: 0; padding: 0.25rem 0.5rem; height: fit-content;">
+                                        {{ task.get_priority_display }}
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="story-points-box fs-8" style="min-height: 0; padding: 0.25rem 0.5rem; height: fit-content; min-width: 32px;">
+                                        {{ task.story_points }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="card text-center p-5 border-dashed mt-2 shadow-sm bg-white">
+                                <div class="text-muted fs-2 mb-2"><i class="bi bi-inbox"></i></div>
+                                <h5 class="fs-5">No backlog items found</h5>
+                                <p class="text-muted fs-7">Try adjusting your filters or create a new task below.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD VIEW -->
+                <div class="card-view-container" style="display: none;">
+                    <div class="card-view-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));">
+                        {% for task in tasks %}
+                        <div class="task-card priority-card-{{ task.priority }} text-decoration-none">
+                            <div class="task-card-header">
+                                {% if task.item_type == 'bug' %}
+                                    <span class="task-card-type-badge task-card-type-bug"><i class="bi bi-bug-fill"></i> Bug</span>
+                                {% else %}
+                                    <span class="task-card-type-badge task-card-type-story"><i class="bi bi-bookmark-fill"></i> Story</span>
+                                {% endif %}
+                                <span class="task-card-points">{{ task.story_points }}</span>
+                            </div>
+                            <a href="{% url 'backlog:task_detail' task.id %}" class="task-card-title text-dark text-decoration-none d-block">{{ task.title }}</a>
+                            <div class="task-card-divider my-2"></div>
+                            <div class="task-card-tags">
+                                {% for tag in task.tags.all %}<span class="task-card-tag">{{ tag.name }}</span>{% empty %}<span class="task-card-no-tag">No tags</span>{% endfor %}
+                            </div>
+                            <div class="task-card-footer mt-2 mb-2">
+                                <span class="task-card-priority-label">{{ task.get_priority_display }}</span>
+                                {% if task.assignee %}
+                                <span class="task-card-assignee">
+                                    <i class="bi bi-person-fill"></i>
+                                    {{ task.assignee.get_full_name|default:task.assignee.username }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="card text-center p-5 border-dashed mt-2 shadow-sm bg-white" style="grid-column: 1 / -1;">
+                            <div class="text-muted fs-2 mb-2"><i class="bi bi-inbox"></i></div>
+                            <h5 class="fs-5">No backlog items found</h5>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

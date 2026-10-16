@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+    <defs>
+        <linearGradient id="zldBeams" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#c084fc" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="zldSynth" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#fb923c" stop-opacity="0.9"/>
+            <stop offset="50%" stop-color="#ec4899" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#a855f7" stop-opacity="0.8"/>
+        </linearGradient>
+        <radialGradient id="zldDome" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stop-color="#ec4899" stop-opacity="0.5"/>
+            <stop offset="70%" stop-color="#8b5cf6" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0"/>
+        </radialGradient>
+    </defs>
+    <!-- Concert stage spotlight fan beams -->
+    <polygon points="175,55 125,5 155,5" fill="url(#zldBeams)" opacity="0.45"/>
+    <polygon points="175,55 160,0 190,0" fill="url(#zldBeams)" opacity="0.55"/>
+    <polygon points="175,55 195,5 225,5" fill="url(#zldBeams)" opacity="0.45"/>
+    <!-- Stage glow dome -->
+    <ellipse cx="175" cy="48" rx="35" ry="12" fill="url(#zldDome)"/>
+    <!-- Glowing neon acoustic curves -->
+    <path d="M15 48 C 45 20, 75 52, 105 28 S 145 42, 175 22 S 210 38, 230 25" stroke="url(#zldSynth)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M25 52 C 55 26, 85 58, 115 34 S 155 48, 185 28" stroke="url(#zldSynth)" stroke-width="1.4" stroke-opacity="0.4" fill="none" stroke-linecap="round"/>
+    <!-- Neon equalizer bars -->
+    <rect x="58" y="30" width="2.5" height="16" rx="1.2" fill="#fb923c"/>
+    <rect x="64" y="22" width="2.5" height="24" rx="1.2" fill="#f43f5e"/>
+    <rect x="70" y="26" width="2.5" height="20" rx="1.2" fill="#ec4899"/>
+    <rect x="76" y="34" width="2.5" height="12" rx="1.2" fill="#c084fc"/>
+    <!-- Concert stardust sparkles -->
+    <path d="M128 14 Q 128 18, 132 18 Q 128 18, 128 22 Q 128 18, 124 18 Q 128 18, 128 14 Z" fill="#fdf4ff"/>
+    <path d="M175 12 Q 175 16, 179 16 Q 175 16, 175 20 Q 175 16, 171 16 Q 175 16, 175 12 Z" fill="#fb923c"/>
+    <circle cx="210" cy="15" r="1.5" fill="#f472b6"/>
+</svg>

@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from .models import Sprint, Task
+from .sprint_services import check_sprint_date_overlap
 
 
 class SprintCreateForm(forms.ModelForm):
@@ -83,6 +85,14 @@ class SprintCreateForm(forms.ModelForm):
                     "end_date",
                     "End date cannot be earlier than start date."
                 )
+            else:
+                # AC: Check for overlapping sprint date ranges
+                conflict = check_sprint_date_overlap(start_date, end_date)
+                if conflict:
+                    self.add_error(
+                        "start_date",
+                        f"Sprint dates cannot overlap with an existing sprint ({conflict.name}: {conflict.start_date} to {conflict.end_date})."
+                    )
 
         return cleaned_data
 
@@ -160,9 +170,52 @@ class SprintEditForm(forms.ModelForm):
             lambda obj: obj.get_full_name() or obj.username
         )
 
-        if self.instance and self.instance.status not in ['active', 'stopped']:
-            choices = [c for c in Sprint.STATUS_CHOICES if c[0] != 'stopped']
-            self.fields["status"].choices = choices
+        is_started = bool(
+            self.instance
+            and getattr(self.instance, "pk", None)
+            and self.instance.status in ["active", "stopped", "cancelled", "completed"]
+        )
+
+        if is_started:
+            self.fields["start_date"].widget.attrs["readonly"] = "readonly"
+            self.fields["end_date"].widget.attrs["readonly"] = "readonly"
+            self.fields["start_date"].help_text = "Sprint start date and end date can only be changed before the sprint starts."
+            self.fields["end_date"].help_text = "Sprint start date and end date can only be changed before the sprint starts."
+
+        clean_choices = []
+        seen_labels = set()
+        for code, label in Sprint.STATUS_CHOICES:
+            if code in ["not_started", "planning"]:
+                # AC: Once a sprint is started, it cannot be changed back to not started or planning
+                if is_started and not self.is_bound:
+                    continue
+                if label not in seen_labels:
+                    seen_labels.add(label)
+                    clean_choices.append((code, label))
+            elif code in ["stopped", "cancelled"]:
+                # Cancelled is only allowed if the sprint is currently active (or already cancelled)
+                is_active_or_cancelled = bool(
+                    self.instance
+                    and getattr(self.instance, "pk", None)
+                    and self.instance.status in ["active", "stopped", "cancelled"]
+                )
+                if not is_active_or_cancelled and not self.is_bound:
+                    continue
+                if "Cancelled" not in seen_labels:
+                    seen_labels.add("Cancelled")
+                    clean_choices.append(("stopped", "Cancelled"))
+            else:
+                if label not in seen_labels:
+                    seen_labels.add(label)
+                    clean_choices.append((code, label))
+
+        if self.is_bound:
+            # Allow codes during POST so clean_status can validate and give precise error messages
+            clean_choices.append(("cancelled", "Cancelled"))
+            clean_choices.append(("not_started", "Not Started"))
+            clean_choices.append(("planning", "Planning"))
+
+        self.fields["status"].choices = clean_choices
 
     def clean_name(self):
         name = self.cleaned_data.get("name", "").strip()
@@ -170,10 +223,61 @@ class SprintEditForm(forms.ModelForm):
             raise forms.ValidationError("Sprint name is required.")
         return name
 
+    def clean_status(self):
+        status = self.cleaned_data.get("status")
+        if status == "cancelled":
+            status = "stopped"
+
+        current_status = getattr(self.instance, "status", None) if self.instance and self.instance.pk else None
+
+        # AC: A completed or cancelled sprint cannot be changed anymore
+        if current_status in ["completed", "stopped", "cancelled"]:
+            status_display = "cancelled" if current_status in ["stopped", "cancelled"] else "completed"
+            raise forms.ValidationError(f"A {status_display} sprint cannot be changed anymore.")
+
+        # AC: Once a sprint is started, it cannot be changed back to not started or planning
+        if current_status in ["active", "stopped", "cancelled", "completed"]:
+            if status in ["not_started", "planning"]:
+                raise forms.ValidationError(
+                    "A started sprint cannot be changed back to not started or planning."
+                )
+
+        # AC: Cancelled status is only allowed if the sprint is currently active
+        if status == "stopped":
+            if current_status not in ["active", "stopped", "cancelled"]:
+                raise forms.ValidationError("Only active sprints can be cancelled.")
+
+        return status
+
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get("start_date")
         end_date = cleaned_data.get("end_date")
+        status = cleaned_data.get("status")
+
+        # AC: A completed or cancelled sprint cannot be changed anymore
+        current_status = getattr(self.instance, "status", None) if self.instance and self.instance.pk else None
+        if current_status in ["completed", "stopped", "cancelled"]:
+            status_display = "cancelled" if current_status in ["stopped", "cancelled"] else "completed"
+            raise forms.ValidationError(f"A {status_display} sprint cannot be changed anymore.")
+
+        # AC: They need to change the sprint start date and end date before the sprint starts, after start cannot change anything
+        if self.instance and self.instance.pk:
+            orig_start = getattr(self.instance, "start_date", None)
+            orig_end = getattr(self.instance, "end_date", None)
+            is_started = current_status in ["active", "stopped", "cancelled", "completed"]
+
+            if is_started:
+                if start_date and orig_start and start_date != orig_start:
+                    self.add_error(
+                        "start_date",
+                        "Sprint start date and end date can only be changed before the sprint starts. After start, dates cannot be changed."
+                    )
+                if end_date and orig_end and end_date != orig_end and status not in ["stopped", "completed"]:
+                    self.add_error(
+                        "end_date",
+                        "Sprint start date and end date can only be changed before the sprint starts. After start, dates cannot be changed."
+                    )
 
         # Validate start date and end date
         if start_date and end_date:
@@ -182,8 +286,82 @@ class SprintEditForm(forms.ModelForm):
                     "end_date",
                     "End date cannot be earlier than start date."
                 )
+            else:
+                # AC: Check for overlapping sprint date ranges
+                conflict = check_sprint_date_overlap(
+                    start_date,
+                    end_date,
+                    exclude_sprint_id=self.instance.pk if self.instance else None
+                )
+                if conflict:
+                    self.add_error(
+                        "start_date",
+                        f"Sprint dates cannot overlap with an existing sprint ({conflict.name}: {conflict.start_date} to {conflict.end_date})."
+                    )
+
+        # Enforce single active sprint rule
+        if status == "active":
+            another_active = (
+                Sprint.objects.exclude(pk=self.instance.pk if self.instance else None)
+                .filter(status="active")
+                .exists()
+            )
+            if another_active:
+                self.add_error(
+                    "status",
+                    "Another Sprint is already active. Complete it first."
+                )
+
+        # AC: If by manual the sprint is set to cancelled or completed, change end date to current date
+        if status in ["stopped", "completed"]:
+            current_status = getattr(self.instance, "status", None) if self.instance and self.instance.pk else None
+            if current_status != status:
+                today = timezone.localdate()
+                cleaned_data["end_date"] = today
+                if start_date and start_date > today:
+                    cleaned_data["start_date"] = today
 
         return cleaned_data
+
+    def save(self, commit=True, user=None):
+        sprint = super().save(commit=False)
+        if user:
+            sprint._changed_by = user
+        status = self.cleaned_data.get("status")
+        if status in ["stopped", "completed"]:
+            if self.cleaned_data.get("end_date"):
+                sprint.end_date = self.cleaned_data.get("end_date")
+            if self.cleaned_data.get("start_date"):
+                sprint.start_date = self.cleaned_data.get("start_date")
+        if commit:
+            sprint.save()
+            self.save_m2m()
+
+            # Reassign sprint tasks for any removed team members if reassignments were specified
+            if getattr(self, "data", None):
+                User = get_user_model()
+                for key, val in self.data.items():
+                    if key.startswith("reassign_task_") and val:
+                        try:
+                            tid = int(key.replace("reassign_task_", ""))
+                            task = sprint.tasks.filter(pk=tid).first()
+                            if task and str(val).isdigit():
+                                new_assignee = User.objects.filter(pk=int(val)).first()
+                                if new_assignee:
+                                    task.assignee = new_assignee
+                                    task.save(update_fields=["assignee", "updated_at"])
+                                    from backlog.models import TaskHistory
+                                    actor_name = user.get_full_name() or user.username if user else "Admin"
+                                    new_name = new_assignee.get_full_name() or new_assignee.username
+                                    TaskHistory.objects.create(
+                                        task=task,
+                                        changed_by=user,
+                                        description=f'{actor_name} reassigned task to "{new_name}"',
+                                    )
+                        except (ValueError, TypeError):
+                            pass
+
+        return sprint
 
 
 class TaskCreateForm(forms.ModelForm):
@@ -367,3 +545,13 @@ class TaskEditForm(forms.ModelForm):
             )
 
         return story_points
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.instance and self.instance.pk:
+            if self.instance.status == 'completed':
+                raise forms.ValidationError("A completed task cannot be edited.")
+            if self.instance.sprint and self.instance.sprint.status in ['completed', 'stopped', 'cancelled']:
+                status_display = 'cancelled' if self.instance.sprint.status in ['stopped', 'cancelled'] else 'completed'
+                raise forms.ValidationError(f"Tasks in a {status_display} sprint cannot be edited.")
+        return cleaned_data

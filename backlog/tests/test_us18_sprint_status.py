@@ -25,6 +25,8 @@ class US18SprintStatusTestCase(TestCase):
             first_name="Sprint",
             last_name="Manager",
         )
+        from accounts.models import AccountSecurity
+        AccountSecurity.objects.filter(user=self.user).update(must_change_password=False)
         self.client.force_login(self.user)
 
         self.active_sprint = Sprint.objects.create(

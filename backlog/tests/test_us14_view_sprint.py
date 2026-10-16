@@ -50,6 +50,10 @@ class ViewSprintTests(TestCase):
             is_staff=False,
             is_superuser=False,
         )
+        from accounts.models import AccountSecurity
+        AccountSecurity.objects.filter(
+            user__in=[self.admin, self.po_user, self.sm_user, self.member1, self.unauthorized_user]
+        ).update(must_change_password=False)
 
         # Tags
         self.tag_backend = Tag.objects.create(name="Backend")

@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function bindTaskEvents(taskItem) {
         const card = taskItem.querySelector('.sticky-task-card');
-        if (!card || !card.draggable) return;
+        if (!card || !card.draggable || card.dataset.status === 'completed') return;
 
         taskItem.addEventListener('dragstart', (e) => {
             draggedItem = taskItem;
@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!taskId) return;
 
             const oldStatus = card.dataset.status;
+            if (oldStatus === 'completed') return;
             const storyPoints = Number(card.dataset.storyPoints) || 0;
 
             // Optimistic UI: move the card immediately
@@ -126,6 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
                 if (!response.ok || !result.ok) {
                     throw new Error(Object.values(result.errors || {}).flat().join(' ') || 'Unable to update task status.');
+                }
+
+                if (newStatus === 'completed') {
+                    card.removeAttribute('draggable');
+                    card.draggable = false;
                 }
 
                 // Dispatch event with authoritative burndown from server

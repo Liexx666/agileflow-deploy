@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from backlog.models import Tag, Sprint, Task, SprintHistory
+from accounts.models import AccountSecurity
+from backlog.models import Tag, Sprint, Task, SprintHistory, TaskWorkSession
 
 
 class Command(BaseCommand):
@@ -38,6 +39,7 @@ class Command(BaseCommand):
             # Set the password properly so you can actually log in!
             user.set_password('password123')
             user.save()
+            AccountSecurity.objects.update_or_create(user=user, defaults={'must_change_password': True})
             user_objs[username] = user
 
         user_chloe = user_objs['chloe']
@@ -59,10 +61,18 @@ class Command(BaseCommand):
         # 3. Create Sprints matching mockup with proper required dates (US-12 compliant)
         import datetime
         today = datetime.date.today()
+
+        def get_or_create_sprint(sprint_name, sprint_defaults):
+            sprint = Sprint.objects.filter(name=sprint_name, is_deleted=False).first()
+            if not sprint:
+                sprint = Sprint.objects.filter(name=sprint_name).first()
+            if not sprint:
+                sprint = Sprint.objects.create(name=sprint_name, **sprint_defaults)
+            return sprint
         
-        sprint1, _ = Sprint.objects.get_or_create(
-            name='Sprint 1',
-            defaults={
+        sprint1 = get_or_create_sprint(
+            'Sprint 1',
+            {
                 'status': 'completed',
                 'start_date': today - datetime.timedelta(days=28),
                 'end_date': today - datetime.timedelta(days=15),
@@ -93,9 +103,9 @@ class Command(BaseCommand):
             h5 = SprintHistory.objects.create(sprint=sprint1, changed_by=admin_user, description="Admin updated status to 'Completed'")
             h5.timestamp = t3; h5.save(update_fields=['timestamp'])
 
-        sprint2, _ = Sprint.objects.get_or_create(
-            name='Sprint 2',
-            defaults={
+        sprint2 = get_or_create_sprint(
+            'Sprint 2',
+            {
                 'status': 'completed',
                 'start_date': today - datetime.timedelta(days=14),
                 'end_date': today - datetime.timedelta(days=1),
@@ -125,9 +135,9 @@ class Command(BaseCommand):
             h5 = SprintHistory.objects.create(sprint=sprint2, changed_by=admin_user, description="Admin updated status to 'Completed'")
             h5.timestamp = t2; h5.save(update_fields=['timestamp'])
 
-        sprint3, _ = Sprint.objects.get_or_create(
-            name='Sprint 3',
-            defaults={
+        sprint3 = get_or_create_sprint(
+            'Sprint 3',
+            {
                 'status': 'active',
                 'start_date': today,
                 'end_date': today + datetime.timedelta(days=13),
@@ -239,5 +249,44 @@ class Command(BaseCommand):
             assignee=user_yaoxing,
         )
         task5.tags.set([tag_objs['Testing']])
+
+        # Seed initial TaskWorkSession records so database time logging is immediately reflected
+        from django.utils import timezone
+        import datetime
+        now = timezone.now()
+        yesterday = now - datetime.timedelta(days=1)
+        two_days_ago = now - datetime.timedelta(days=2)
+        three_days_ago = now - datetime.timedelta(days=3)
+
+        TaskWorkSession.objects.create(
+            task=task1,
+            user=user_chloe,
+            started_at=yesterday.replace(hour=9, minute=0, second=0, microsecond=0),
+            ended_at=yesterday.replace(hour=13, minute=30, second=0, microsecond=0),
+        )
+        TaskWorkSession.objects.create(
+            task=task2,
+            user=user_hiromu,
+            started_at=two_days_ago.replace(hour=8, minute=30, second=0, microsecond=0),
+            ended_at=two_days_ago.replace(hour=16, minute=30, second=0, microsecond=0),
+        )
+        TaskWorkSession.objects.create(
+            task=task3,
+            user=user_ethan,
+            started_at=yesterday.replace(hour=10, minute=0, second=0, microsecond=0),
+            ended_at=yesterday.replace(hour=13, minute=30, second=0, microsecond=0),
+        )
+        TaskWorkSession.objects.create(
+            task=task4,
+            user=user_siddharth,
+            started_at=three_days_ago.replace(hour=14, minute=0, second=0, microsecond=0),
+            ended_at=three_days_ago.replace(hour=15, minute=30, second=0, microsecond=0),
+        )
+        TaskWorkSession.objects.create(
+            task=task5,
+            user=user_yaoxing,
+            started_at=yesterday.replace(hour=16, minute=0, second=0, microsecond=0),
+            ended_at=yesterday.replace(hour=16, minute=30, second=0, microsecond=0),
+        )
 
         self.stdout.write(self.style.SUCCESS("Successfully seeded 5 sample mock tasks with consistent 'Task N: Title' format!"))

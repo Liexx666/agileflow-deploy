@@ -19,6 +19,6 @@ class RequirePasswordChangeMiddleware:
         if request.user.is_authenticated:
             security, _ = AccountSecurity.objects.get_or_create(user=request.user)
             request.password_change_required = security.must_change_password
-            if security.must_change_password and request.resolver_match.view_name not in self.allowed_views:
+            if security.must_change_password and request.resolver_match and request.resolver_match.view_name not in self.allowed_views:
                 return redirect("accounts:change_password")
 

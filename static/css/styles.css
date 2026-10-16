@@ -138,12 +138,15 @@ h1, h2, h3, h4, .brand-title {
     color: #ffffff !important;
 }
 
-.badge-sprint-stopped {
+.badge-sprint-stopped,
+.badge-sprint-cancelled {
     background-color: #ef4444 !important;
     color: #ffffff !important;
 }
 .badge-sprint-stopped:hover,
-.badge-sprint-stopped:focus {
+.badge-sprint-stopped:focus,
+.badge-sprint-cancelled:hover,
+.badge-sprint-cancelled:focus {
     background-color: #dc2626 !important;
     color: #ffffff !important;
 }
@@ -1121,33 +1124,119 @@ body.bg-light {
 .priority-box.important { background: #ff8c04; color: #ffffff; font-weight: bold; border: none; }
 .priority-box.urgent { background: #ff3131; color: #ffffff; font-weight: bold; border: none; }
 
-/* Forms and menus: one light surface and visible keyboard focus. */
+/* Forms and menus: responsive to theme variables and visible keyboard focus. */
 .form-control, .form-select, .sort-select, .filter-btn {
-    background-color: var(--surface);
-    color: var(--ink);
-    border-color: #987c9b;
+    background-color: var(--theme-input-bg, var(--surface));
+    color: var(--theme-text-main, var(--ink));
+    border-color: var(--theme-input-border, #987c9b);
     border-radius: 8px;
 }
-.form-control::placeholder { color: #75667b; opacity: 1; }
+.form-control::placeholder { color: var(--theme-text-muted, #75667b); opacity: 1; }
 .form-control:focus, .form-select:focus, .filter-btn:focus-visible {
-    color: var(--ink);
-    background-color: #ffffff;
-    border-color: var(--accent);
+    color: var(--theme-text-headings, var(--ink));
+    background-color: var(--theme-input-bg, #ffffff);
+    border-color: var(--theme-accent, var(--accent));
     box-shadow: 0 0 0 .2rem rgba(117,66,105,.2);
 }
-.form-select option, .dropdown-menu { color: var(--ink); background: var(--surface); }
-.dropdown-menu { border-color: var(--line); }
-.dropdown-header, .form-check-label { color: var(--ink); }
-.form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
-.choice-grid > div > div label { color: var(--ink); background: var(--surface); border-color: #987c9b; }
+.form-select option { color: var(--theme-text-headings, var(--ink)); background: var(--theme-dropdown-bg, var(--surface)); }
+.dropdown-menu { color: var(--theme-text-main, var(--ink)); background: var(--theme-dropdown-bg, var(--surface)); border-color: var(--theme-dropdown-border, var(--line)); }
+.dropdown-header, .form-check-label { color: var(--theme-text-headings, var(--ink)); }
+.form-check-input:checked { background-color: var(--theme-accent, var(--accent)); border-color: var(--theme-accent, var(--accent)); }
+.choice-grid > div > div label, .choice-grid label { color: var(--theme-text-headings, #1e293b); background: var(--theme-card-bg, #ffffff); border-color: var(--theme-card-border, #cbd5e1); font-weight: 700; }
 .choice-grid label:has(input:checked) {
-    color: var(--ink); background: var(--sun-lemon); border-color: var(--accent);
-    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--theme-accent-text, #ffffff) !important; background: var(--theme-accent, #2563eb) !important; border-color: var(--theme-accent, #2563eb) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
 }
 .choice-grid label:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 3px; }
 .invalid-feedback, .text-danger, .form-label > span { color: #a3233d !important; }
 .alert-danger { color: #842238; background: #fce1e3; border-color: #e3aab4; }
 .alert-success { color: #285035; background: #e2efdc; border-color: #a2c59b; }
+
+/* Reassign Member's Tasks Card styling within modals */
+.reassign-task-card,
+[data-mode="dark"] .reassign-task-card,
+body[data-mode="dark"] .reassign-task-card {
+    background: var(--theme-surface-glass, rgba(30, 18, 40, 0.85)) !important;
+    border: 1px solid var(--theme-card-border, rgba(244, 114, 182, 0.25)) !important;
+    border-radius: 12px !important;
+    color: var(--theme-text-main, #ffffff) !important;
+}
+
+[data-mode="light"] .reassign-task-card,
+body[data-mode="light"] .reassign-task-card,
+body:not([data-mode="dark"]) .reassign-task-card {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.reassign-task-title,
+[data-mode="dark"] .reassign-task-title,
+body[data-mode="dark"] .reassign-task-title {
+    color: var(--theme-text-headings, #ffffff) !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
+}
+
+[data-mode="light"] .reassign-task-title,
+body[data-mode="light"] .reassign-task-title,
+body:not([data-mode="dark"]) .reassign-task-title {
+    color: #0f172a !important;
+}
+
+.reassign-to-label,
+[data-mode="dark"] .reassign-to-label,
+body[data-mode="dark"] .reassign-to-label {
+    color: var(--theme-text-main, #e2e8f0) !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+}
+
+[data-mode="light"] .reassign-to-label,
+body[data-mode="light"] .reassign-to-label,
+body:not([data-mode="dark"]) .reassign-to-label {
+    color: #475569 !important;
+}
+
+.reassign-section-label,
+[data-mode="dark"] .reassign-section-label,
+body[data-mode="dark"] .reassign-section-label {
+    color: var(--theme-text-headings, #ffffff) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
+    font-size: 0.82rem !important;
+}
+
+[data-mode="light"] .reassign-section-label,
+body[data-mode="light"] .reassign-section-label,
+body:not([data-mode="dark"]) .reassign-section-label {
+    color: #334155 !important;
+}
+
+.task-reassign-select,
+.sprint-task-reassign-select,
+[data-mode="dark"] .task-reassign-select,
+[data-mode="dark"] .sprint-task-reassign-select,
+body[data-mode="dark"] .task-reassign-select,
+body[data-mode="dark"] .sprint-task-reassign-select {
+    background-color: var(--theme-input-bg, #1e1228) !important;
+    color: var(--theme-text-headings, #ffffff) !important;
+    border-color: var(--theme-input-border, rgba(244, 114, 182, 0.3)) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+}
+
+[data-mode="light"] .task-reassign-select,
+[data-mode="light"] .sprint-task-reassign-select,
+body[data-mode="light"] .task-reassign-select,
+body[data-mode="light"] .sprint-task-reassign-select,
+body:not([data-mode="dark"]) .task-reassign-select,
+body:not([data-mode="dark"]) .sprint-task-reassign-select {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
 
 /* Buttons retain clear primary, secondary and destructive roles. */
 .btn-primary, .btn-create-task, .btn-create-submit {
@@ -2106,3 +2195,340 @@ body.bg-light:has(.backlog-content)::after {
     background: #f0fdf4;
     transform: scale(1.02);
 }
+
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsive Architecture (Phones & Tablets)
+   Covers: Viewports, Navbar, Kanban Board, Product Backlog, Admin Dashboard,
+   Manage Accounts, Modals, Forms & Touch Interaction Targets
+   ========================================================================== */
+
+/* 1. Global Touch & Viewport Handling */
+@media (max-width: 768px) {
+    /* Prevent iOS Safari auto-zoom on input focus */
+    input[type="text"],
+    input[type="search"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    textarea,
+    .form-control,
+    .form-select {
+        font-size: 16px !important;
+    }
+
+    /* Touch tap targets and spacing */
+    button,
+    .btn,
+    .form-check-input,
+    .dropdown-item {
+        min-height: 38px;
+    }
+
+    /* Container gutters */
+    .container,
+    .container-fluid {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    /* Modals on Mobile */
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: calc(100% - 1rem) !important;
+    }
+
+    .modal-content {
+        border-radius: 14px !important;
+    }
+
+    .modal-body {
+        padding: 1.1rem !important;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        gap: 0.5rem !important;
+        padding: 0.85rem 1.1rem !important;
+    }
+
+    .modal-footer > button,
+    .modal-footer > form,
+    .modal-footer > a {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}
+
+/* 2. Top Navigation Bar & Dropdowns (Phones & Small Tablets) */
+@media (max-width: 576px) {
+    .app-navbar {
+        padding: 0.35rem 0;
+    }
+
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+
+    .brand-title {
+        font-size: 1.15rem !important;
+    }
+
+    .btn-backgrounds-menu {
+        padding: 0.35rem 0.65rem !important;
+        font-size: 0.82rem !important;
+    }
+
+    .backgrounds-dropdown-panel {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        right: -8px !important;
+        left: auto !important;
+        padding: 1rem !important;
+    }
+
+    #profileDropdownMenu {
+        width: calc(100vw - 16px) !important;
+        max-width: 310px !important;
+        right: 0 !important;
+    }
+}
+
+/* 3. Sprint Board Kanban Columns (Mobile & Tablet Swipeable Flow) */
+@media (max-width: 992px) {
+    .sprint-board-container {
+        padding: 0.75rem 0.25rem;
+    }
+
+    .sprint-main-title {
+        font-size: 1.7rem;
+    }
+
+    .sprint-sub-title {
+        font-size: 1.15rem;
+    }
+
+    /* Smooth swipeable horizontal columns instead of endless vertical stack */
+    .kanban-columns-grid {
+        display: flex !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        scroll-snap-type: x mandatory !important;
+        gap: 1rem !important;
+        padding: 0.5rem 0.25rem 1.25rem !important;
+        margin-top: 0.75rem !important;
+    }
+
+    .kanban-column-box {
+        flex: 0 0 85vw !important;
+        max-width: 85vw !important;
+        min-width: 285px !important;
+        scroll-snap-align: center !important;
+        min-height: 460px !important;
+    }
+
+    .sticky-task-card {
+        touch-action: pan-y;
+        padding: 0.85rem 0.95rem;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 992px) {
+    .kanban-column-box {
+        flex: 0 0 47% !important;
+        max-width: 48% !important;
+        min-width: 320px !important;
+    }
+}
+
+/* 4. Product Backlog Layout & Controls */
+@media (max-width: 768px) {
+    .backlog-layout {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+
+    .sprints-sidebar {
+        width: 100% !important;
+        min-width: 100% !important;
+        padding: 1rem !important;
+    }
+
+    .backlog-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
+    .controls-toolbar {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .controls-toolbar > * {
+        width: 100% !important;
+    }
+
+    .sort-select,
+    .filter-btn {
+        width: 100% !important;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .sprint-header {
+        padding: 0.65rem 0.75rem !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .sprint-name-title {
+        font-size: 0.95rem !important;
+    }
+
+    .list-view-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* 5. Admin Dashboard Responsive Architecture */
+@media (max-width: 768px) {
+    .admin-dash-page {
+        padding: 0.25rem !important;
+    }
+
+    .dash-timeline-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.65rem !important;
+        padding: 1rem !important;
+    }
+
+    .dash-timeline-bar > * {
+        width: 100% !important;
+    }
+
+    .dash-timeline-input {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .dash-sort-select {
+        min-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .summary-period-banner {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+        padding: 1rem !important;
+    }
+
+    .chart-card-surface {
+        padding: 1.25rem 0.85rem !important;
+        min-height: auto !important;
+    }
+
+    .dash-chart-viewport {
+        height: 290px !important;
+    }
+
+    .dash-chart-y-axis {
+        width: 58px !important;
+        min-width: 58px !important;
+        padding: 1.5rem 0.25rem 0.5rem 0.35rem !important;
+    }
+
+    .dash-y-axis-title {
+        font-size: 0.65rem !important;
+    }
+
+    .dash-y-tick-label {
+        font-size: 0.7rem !important;
+    }
+
+    .dash-member-card {
+        border-radius: 14px !important;
+        padding: 0.75rem 1rem !important;
+        gap: 0.5rem !important;
+    }
+
+    .dash-member-name {
+        font-size: 0.95rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-period-banner {
+        grid-template-columns: 1fr !important;
+    }
+
+    .dash-metrics-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.65rem !important;
+    }
+}
+
+/* 6. Manage User Accounts Page */
+@media (max-width: 768px) {
+    .account-panel {
+        padding: 1.25rem 1rem !important;
+        border-radius: 14px !important;
+    }
+
+    .account-table td {
+        padding: 0.65rem 0.5rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .account-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .account-name {
+        font-size: 0.9rem !important;
+    }
+
+    .account-table .btn {
+        padding: 0.28rem 0.55rem !important;
+        font-size: 0.78rem !important;
+    }
+}
+
+/* 7. Forms, Task Details & Sprint Edit/Create */
+@media (max-width: 576px) {
+    .form-actions {
+        flex-direction: column-reverse !important;
+        gap: 0.65rem !important;
+        padding: 1rem !important;
+    }
+
+    .form-actions > .btn {
+        width: 100% !important;
+        justify-content: center;
+    }
+
+    .detail-panel {
+        padding: 1.1rem !important;
+    }
+
+    .time-log-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+    }
+
+    .time-log-item button {
+        align-self: flex-end;
+    }
+}
+

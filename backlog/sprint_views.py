@@ -22,6 +22,7 @@ from .sprint_forms import (
 )
 
 from .sprint_services import (
+    auto_update_sprint_statuses,
     change_sprint_status,
     change_sprint_task_status,
     move_task,
@@ -146,6 +147,7 @@ def move_task_endpoint(request, task_id):
             task_id=task_id,
             sprint_id=form.cleaned_data['sprint_id'],
             assignee_action=form.cleaned_data.get('assignee_action'),
+            new_assignee_id=form.cleaned_data.get('new_assignee_id'),
             changed_by=request.user,
         )
         if extra and extra.get('needs_assignee_decision'):
@@ -158,6 +160,7 @@ def move_task_endpoint(request, task_id):
                     'sprint_name': extra['sprint_name'],
                     'sprint_id': form.cleaned_data['sprint_id'],
                     'task_id': task_id,
+                    'sprint_members': extra.get('sprint_members', []),
                 }
             )
     except Task.DoesNotExist:
@@ -279,6 +282,7 @@ def sprint_board_data(request, sprint_id):
     Supply the data required to display a Sprint board.
     """
 
+    auto_update_sprint_statuses()
     sprint = get_object_or_404(
         Sprint,
         pk=sprint_id,
@@ -427,6 +431,7 @@ def sprint_status_endpoint(request, sprint_id):
         sprint, changed = change_sprint_status(
             sprint_id=sprint_id,
             status=form.cleaned_data['status'],
+            changed_by=request.user,
         )
     except ValidationError as error:
         return JsonResponse(
@@ -446,6 +451,9 @@ def sprint_status_endpoint(request, sprint_id):
                 'status': sprint.status,
                 'status_label': (
                     sprint.get_status_display()
+                ),
+                'end_date': (
+                    sprint.end_date.isoformat() if sprint.end_date else None
                 ),
             },
         }

@@ -28,11 +28,40 @@ urlpatterns = [
         views.admin_reset_user_password,
         name="admin_reset_user_password",
     ),
+    path(
+        "accounts/<int:user_id>/remove/",
+        views.admin_remove_user_account,
+        name="admin_remove_user_account",
+    ),
 
     # US-33
     path(
         "accounts/new/",
         views.register_account_ui,
         name="register_account",
+    ),
+
+    # US-24, US-25, US-26
+    path(
+        "admin-dashboard/",
+        views.admin_dashboard_ui,
+        name="admin_dashboard",
+    ),
+    path(
+        "admin-dashboard/reassign-task/",
+        views.admin_reassign_task,
+        name="admin_reassign_task",
+    ),
+    path(
+        "admin-dashboard/stats-api/",
+        views.admin_dashboard_stats_api,
+        name="admin_dashboard_stats_api",
+    ),
+
+    # Theme Preferences
+    path(
+        "theme/update/",
+        views.update_theme_preference,
+        name="update_theme_preference",
     ),
 ]

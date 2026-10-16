@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
 
+from accounts.models import AccountSecurity
 from backlog.models import Sprint, SprintHistory
 
 
@@ -45,6 +46,7 @@ class CreateSprintTests(TestCase):
             last_name="Master",
             email="sm@example.com",
         )
+        AccountSecurity.objects.filter(user__in=[self.admin, self.regular_user, self.po_user, self.sm_user]).update(must_change_password=False)
         self.dev1 = User.objects.create_user(
             username="dev1",
             first_name="Developer",
@@ -53,11 +55,12 @@ class CreateSprintTests(TestCase):
         )
 
         self.today = date.today()
-        self.two_weeks_later = self.today + timedelta(days=14)
+        self.start_date = self.today + timedelta(days=1)
+        self.two_weeks_later = self.start_date + timedelta(days=14)
 
         self.valid_data = {
             "name": "Sprint 1 - Foundation",
-            "start_date": self.today.strftime("%Y-%m-%d"),
+            "start_date": self.start_date.strftime("%Y-%m-%d"),
             "end_date": self.two_weeks_later.strftime("%Y-%m-%d"),
             "team_members": [self.dev1.id],
             "goal": "Build foundation features and sprint setup.",
@@ -94,7 +97,7 @@ class CreateSprintTests(TestCase):
         self.assertEqual(Sprint.objects.count(), 1)
 
         sprint = Sprint.objects.get(name="Sprint 1 - Foundation")
-        self.assertEqual(sprint.start_date, self.today)
+        self.assertEqual(sprint.start_date, self.start_date)
         self.assertEqual(sprint.end_date, self.two_weeks_later)
         self.assertIsNone(sprint.product_owner)
         self.assertIsNone(sprint.scrum_master)
@@ -109,7 +112,7 @@ class CreateSprintTests(TestCase):
     def test_end_date_before_start_date_fails_validation(self):
         self.client.force_login(self.admin)
         invalid_data = self.valid_data.copy()
-        invalid_data["end_date"] = (self.today - timedelta(days=1)).strftime("%Y-%m-%d")
+        invalid_data["end_date"] = (self.start_date - timedelta(days=1)).strftime("%Y-%m-%d")
 
         response = self.client.post(self.url, invalid_data)
         self.assertEqual(response.status_code, 200)
@@ -155,15 +158,21 @@ class CreateSprintTests(TestCase):
         self.assertIn("Not Started", history.description)
         self.assertIsNotNone(history.timestamp)
 
-    # UI: Admin sees 'Create new sprint' button on backlog page, regular user does not
+    # UI: Admin sees 'Create new sprint' button on backlog page, regular user does not, and neither sees it on sprint backlog management
     def test_create_sprint_button_visibility(self):
         # Regular user should not see 'Create new sprint'
         self.client.force_login(self.regular_user)
         response = self.client.get(reverse("backlog:product_backlog"))
         self.assertNotContains(response, "Create new sprint")
 
-        # Admin user should see 'Create new sprint'
+        # Admin user should see 'Create new sprint' on general backlog
         self.client.force_login(self.admin)
         response = self.client.get(reverse("backlog:product_backlog"))
         self.assertContains(response, "Create new sprint")
         self.assertContains(response, reverse("backlog:create_sprint"))
+
+        # But on sprint backlog management view, it should not be shown
+        sprint = Sprint.objects.create(name="Existing Sprint", status="active")
+        sprint_response = self.client.get(reverse("backlog:sprint_backlog", args=[sprint.id]))
+        self.assertEqual(sprint_response.status_code, 200)
+        self.assertNotContains(sprint_response, "Create new sprint")

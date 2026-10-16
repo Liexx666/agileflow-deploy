@@ -17,6 +17,10 @@ class MoveTaskForm(forms.Form):
     assignee_action = forms.CharField(
         required=False,
     )
+    new_assignee_id = forms.IntegerField(
+        required=False,
+        min_value=1,
+    )
 
 
 class SprintTaskStatusForm(forms.Form):

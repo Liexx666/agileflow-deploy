@@ -89,14 +89,15 @@ class DeleteSprintTests(TestCase):
         self.active_sprint.refresh_from_db()
         self.assertFalse(self.active_sprint.is_deleted)
 
-    def test_admin_cannot_delete_completed_sprint(self):
-        """Admin should NOT be able to delete a completed sprint."""
+    def test_admin_can_delete_completed_sprint(self):
+        """Admin should be able to soft-delete a completed sprint."""
         self.client.force_login(self.admin)
-        self.client.post(
+        response = self.client.post(
             reverse("backlog:delete_sprint", args=[self.completed_sprint.pk])
         )
+        self.assertEqual(response.status_code, 302)
         self.completed_sprint.refresh_from_db()
-        self.assertFalse(self.completed_sprint.is_deleted)
+        self.assertTrue(self.completed_sprint.is_deleted)
 
     def test_get_request_shows_confirmation_page(self):
         """GET on delete_sprint should display the confirmation template."""
@@ -113,8 +114,11 @@ class DeleteSprintTests(TestCase):
         self.client.post(
             reverse("backlog:delete_sprint", args=[self.not_started_sprint.pk])
         )
+        # Flush the flash message
+        self.client.get(reverse("backlog:product_backlog"))
         response = self.client.get(reverse("backlog:product_backlog"))
         self.assertNotContains(response, self.not_started_sprint.name)
+        self.assertNotIn(self.not_started_sprint, response.context["sprints"])
 
     def test_delete_sprint_requires_login(self):
         """Unauthenticated users should be redirected to login."""

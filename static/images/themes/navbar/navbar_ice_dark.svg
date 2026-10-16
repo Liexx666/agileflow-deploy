@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+    <defs>
+        <linearGradient id="auroraNav" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.95"/>
+            <stop offset="50%" stop-color="#60a5fa" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.5"/>
+        </linearGradient>
+        <linearGradient id="iceDarkRidge" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#0c233c" stop-opacity="0.9"/>
+        </linearGradient>
+    </defs>
+    <!-- Aurora Borealis Curtains -->
+    <path d="M10 25 C 40 5, 80 40, 120 18 S 180 32, 230 14" stroke="url(#auroraNav)" stroke-width="4.5" fill="none" opacity="0.65" stroke-linecap="round"/>
+    <path d="M25 32 C 55 12, 95 45, 135 24 S 190 38, 235 22" stroke="url(#auroraNav)" stroke-width="2.5" fill="none" opacity="0.45" stroke-linecap="round"/>
+    <!-- Nocturnal ice ridges -->
+    <polygon points="175,20 152,52 188,52" fill="url(#iceDarkRidge)" stroke="#38bdf8" stroke-width="0.8"/>
+    <polygon points="175,20 188,52 205,52" fill="#081a30" stroke="#0ea5e9" stroke-width="0.6"/>
+    <polygon points="135,28 118,52 145,52" fill="#05101f" stroke="#38bdf8" stroke-width="0.6"/>
+    <!-- Floating polar star gems -->
+    <circle cx="85" cy="18" r="1.5" fill="#f0f9ff"/>
+    <circle cx="150" cy="12" r="2" fill="#38bdf8"/>
+    <path d="M198 10 Q 198 14, 202 14 Q 198 14, 198 18 Q 198 14, 194 14 Q 198 14, 198 10 Z" fill="#7dd3fc"/>
+</svg>

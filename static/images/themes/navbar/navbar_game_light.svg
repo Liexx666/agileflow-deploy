@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+    <defs>
+        <linearGradient id="gameLGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#ec4899" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.8"/>
+        </linearGradient>
+    </defs>
+    <!-- Vaporwave / Outrun horizon line and grid -->
+    <line x1="10" y1="48" x2="230" y2="48" stroke="#a855f7" stroke-width="1.8"/>
+    <line x1="20" y1="54" x2="220" y2="54" stroke="#c084fc" stroke-width="1" stroke-dasharray="4 4"/>
+    <!-- Isometric perspective grid lines -->
+    <line x1="140" y1="48" x2="125" y2="60" stroke="#c084fc" stroke-width="1" opacity="0.6"/>
+    <line x1="165" y1="48" x2="160" y2="60" stroke="#c084fc" stroke-width="1" opacity="0.6"/>
+    <line x1="190" y1="48" x2="195" y2="60" stroke="#c084fc" stroke-width="1" opacity="0.6"/>
+    <line x1="215" y1="48" x2="230" y2="60" stroke="#c084fc" stroke-width="1" opacity="0.6"/>
+    <!-- 8-Bit Pixel Hearts (Player HP / Health Bar motif) -->
+    <!-- Heart 1 -->
+    <g transform="translate(142, 22)">
+        <rect x="2" y="0" width="3" height="3" fill="#ef4444"/>
+        <rect x="7" y="0" width="3" height="3" fill="#ef4444"/>
+        <rect x="0" y="3" width="12" height="3" fill="#ef4444"/>
+        <rect x="2" y="6" width="8" height="3" fill="#ef4444"/>
+        <rect x="4" y="9" width="4" height="3" fill="#ef4444"/>
+        <rect x="3" y="1" width="1.5" height="1.5" fill="#fecaca"/>
+    </g>
+    <!-- Heart 2 -->
+    <g transform="translate(162, 22)">
+        <rect x="2" y="0" width="3" height="3" fill="#ef4444"/>
+        <rect x="7" y="0" width="3" height="3" fill="#ef4444"/>
+        <rect x="0" y="3" width="12" height="3" fill="#ef4444"/>
+        <rect x="2" y="6" width="8" height="3" fill="#ef4444"/>
+        <rect x="4" y="9" width="4" height="3" fill="#ef4444"/>
+        <rect x="3" y="1" width="1.5" height="1.5" fill="#fecaca"/>
+    </g>
+    <!-- Heart 3 -->
+    <g transform="translate(182, 22)">
+        <rect x="2" y="0" width="3" height="3" fill="#f43f5e"/>
+        <rect x="7" y="0" width="3" height="3" fill="#f43f5e"/>
+        <rect x="0" y="3" width="12" height="3" fill="#f43f5e"/>
+        <rect x="2" y="6" width="8" height="3" fill="#f43f5e"/>
+        <rect x="4" y="9" width="4" height="3" fill="#f43f5e"/>
+        <rect x="3" y="1" width="1.5" height="1.5" fill="#fecaca"/>
+    </g>
+    <!-- Floating Pixel Coins with Shine -->
+    <circle cx="75" cy="28" r="8" fill="#f59e0b" stroke="#d97706" stroke-width="1.5"/>
+    <rect x="72" y="24" width="2" height="8" fill="#fef08a"/>
+    <circle cx="95" cy="22" r="6" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/>
+    <rect x="93" y="19" width="1.5" height="6" fill="#fef08a"/>
+    <!-- Arcade D-Pad Icon -->
+    <g transform="translate(30, 22)">
+        <rect x="5" y="0" width="5" height="15" rx="1.5" fill="#7c3aed"/>
+        <rect x="0" y="5" width="15" height="5" rx="1.5" fill="#7c3aed"/>
+        <circle cx="7.5" cy="7.5" r="1.5" fill="#ffffff"/>
+    </g>
+</svg>

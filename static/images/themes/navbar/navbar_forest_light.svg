@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+    <defs>
+        <linearGradient id="forestLGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#047857" stop-opacity="0.95"/>
+        </linearGradient>
+        <linearGradient id="sunBeamNav" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#86efac" stop-opacity="0.1"/>
+        </linearGradient>
+    </defs>
+    <!-- Morning Sunburst Rays -->
+    <polygon points="120,0 145,55 170,55" fill="url(#sunBeamNav)" opacity="0.65"/>
+    <polygon points="155,0 185,55 205,55" fill="url(#sunBeamNav)" opacity="0.5"/>
+    <!-- Alpine Pine Trees Silhouettes -->
+    <!-- Tree 1 -->
+    <polygon points="148,22 142,32 154,32" fill="url(#forestLGrad)"/>
+    <polygon points="148,28 140,40 156,40" fill="url(#forestLGrad)"/>
+    <polygon points="148,36 137,50 159,50" fill="url(#forestLGrad)"/>
+    <!-- Main Center Pine -->
+    <polygon points="175,10 167,24 183,24" fill="#047857"/>
+    <polygon points="175,20 164,36 186,36" fill="#047857"/>
+    <polygon points="175,32 160,52 190,52" fill="#065f46"/>
+    <!-- Tree 3 -->
+    <polygon points="198,18 192,30 204,30" fill="url(#forestLGrad)"/>
+    <polygon points="198,26 190,42 206,42" fill="url(#forestLGrad)"/>
+    <polygon points="198,38 187,52 209,52" fill="url(#forestLGrad)"/>
+    <!-- Foliage / ground contours -->
+    <path d="M10 52 Q 60 42, 110 48 T 210 48 T 235 52" stroke="#059669" stroke-width="2" fill="none"/>
+    <path d="M25 54 Q 75 46, 130 51" stroke="#34d399" stroke-width="1.2" opacity="0.6" fill="none"/>
+    <!-- Floating Botanical Leaf Motif -->
+    <path d="M60 28 C 68 22, 74 24, 76 32 C 68 36, 62 34, 60 28 Z" fill="#10b981" opacity="0.75"/>
+    <path d="M60 28 L 76 32" stroke="#065f46" stroke-width="0.8" opacity="0.8"/>
+    <circle cx="95" cy="24" r="2" fill="#a7f3d0"/>
+    <circle cx="112" cy="34" r="1.5" fill="#facc15" opacity="0.8"/>
+</svg>

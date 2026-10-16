@@ -1,0 +1,3066 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard | AgileFlow{% endblock %}
+
+{% block extra_css %}
+<style>
+/* =========================================================
+   AgileFlow Admin Dashboard & Team Management (Midnight Sun Theme)
+   Follows existing Accounts UI & AgileFlow Design System
+   ========================================================= */
+
+.admin-dash-page {
+    --dash-glass: rgba(255, 250, 245, 0.88);
+    --dash-line: rgba(117, 66, 105, 0.24);
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+/* Single Full-Width Dashboard Container */
+.dash-grid-layout {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Left Teams Sidebar - Styled with Midnight Sun Glassmorphic Panel */
+.dash-teams-sidebar {
+    background: var(--dash-glass);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 20px;
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 560px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 16px 40px rgba(71, 42, 80, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+}
+
+.dash-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--dash-line);
+}
+
+.dash-sidebar-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--theme-text-headings);
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.teams-list-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.team-select-btn {
+    background: var(--theme-surface-glass);
+    border: 1px solid var(--theme-card-border);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--theme-text-headings);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.team-select-btn:hover {
+    border-color: var(--theme-accent);
+    background: var(--theme-accent-subtle);
+    color: var(--theme-accent);
+    transform: translateX(2px);
+}
+
+.team-select-btn.active {
+    background: var(--theme-accent) !important;
+    color: var(--theme-accent-text) !important;
+    border-color: var(--theme-accent) !important;
+    box-shadow: 0 8px 20px var(--theme-card-shadow) !important;
+}
+
+.team-select-btn.active i,
+.team-select-btn.active .team-member-counter {
+    color: var(--theme-accent-text) !important;
+}
+
+.team-member-counter {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.sidebar-bottom-action-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    font-size: 0.92rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(117, 66, 105, 0.08);
+}
+
+.sidebar-bottom-action-btn:hover {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(117, 66, 105, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Main Dashboard Panel */
+.dash-main-panel {
+    background: var(--dash-glass);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 22px;
+    padding: 2rem 2.25rem;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 24px 60px rgba(71, 42, 80, 0.12);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.dash-main-heading {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 2.1rem;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+}
+
+/* Mode Switcher Tabs */
+.dash-mode-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1.5px solid var(--dash-line);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.dash-mode-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--muted);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.dash-mode-tab-btn:hover {
+    color: var(--accent);
+    background: rgba(117, 66, 105, 0.06);
+}
+
+.dash-mode-tab-btn.active {
+    color: #ffffff;
+    background: var(--accent);
+    box-shadow: 0 4px 12px rgba(117, 66, 105, 0.25);
+}
+
+/* Timeline Controls Bar */
+.dash-timeline-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid var(--dash-line);
+    border-radius: 14px;
+    padding: 0.85rem 1.25rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+}
+
+.dash-timeline-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--theme-text-headings);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.dash-timeline-input {
+    max-width: 175px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-color: var(--theme-input-border);
+    background: var(--theme-input-bg);
+    color: var(--theme-text-main);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.dash-timeline-input:focus {
+    border-color: var(--theme-accent);
+    box-shadow: 0 0 0 0.2rem var(--theme-accent-subtle);
+}
+
+/* Ensure calendar and clock icons in period inputs are clearly visible in both light & dark themes */
+body[data-mode="dark"] .dash-timeline-input[type="date"],
+body[data-mode="dark"] .dash-timeline-input[type="time"],
+[data-mode="dark"] .dash-timeline-input[type="date"],
+[data-mode="dark"] .dash-timeline-input[type="time"] {
+    color-scheme: dark !important;
+}
+
+body[data-mode="dark"] .dash-timeline-input::-webkit-calendar-picker-indicator,
+[data-mode="dark"] .dash-timeline-input::-webkit-calendar-picker-indicator {
+    filter: brightness(1.8) contrast(1.1) !important;
+    opacity: 0.95 !important;
+    cursor: pointer !important;
+    padding: 3px !important;
+    border-radius: 4px !important;
+    transition: transform 0.15s ease, opacity 0.15s ease !important;
+}
+
+body[data-mode="dark"] .dash-timeline-input::-webkit-calendar-picker-indicator:hover,
+[data-mode="dark"] .dash-timeline-input::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.15) !important;
+    opacity: 1 !important;
+}
+
+body[data-mode="light"] .dash-timeline-input[type="date"],
+body[data-mode="light"] .dash-timeline-input[type="time"],
+[data-mode="light"] .dash-timeline-input[type="date"],
+[data-mode="light"] .dash-timeline-input[type="time"] {
+    color-scheme: light !important;
+}
+
+body[data-mode="light"] .dash-timeline-input::-webkit-calendar-picker-indicator,
+[data-mode="light"] .dash-timeline-input::-webkit-calendar-picker-indicator {
+    filter: none !important;
+    opacity: 0.85 !important;
+    cursor: pointer !important;
+    padding: 3px !important;
+    border-radius: 4px !important;
+    transition: transform 0.15s ease, opacity 0.15s ease !important;
+}
+
+body[data-mode="light"] .dash-timeline-input::-webkit-calendar-picker-indicator:hover,
+[data-mode="light"] .dash-timeline-input::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.15) !important;
+    opacity: 1 !important;
+}
+
+/* Sub-header Toolbar */
+.dash-metrics-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--dash-line);
+}
+
+.dash-metrics-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--theme-text-headings);
+    margin: 0;
+}
+
+.dash-sort-select {
+    width: auto;
+    min-width: 190px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-color: var(--theme-input-border);
+    background: var(--theme-input-bg);
+    color: var(--theme-text-main);
+    border-radius: 8px;
+}
+
+/* Member Capsule Cards (Wireframe 1 - Midnight Sun Palette) */
+.dash-member-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: 2rem;
+}
+
+.dash-member-card {
+    background: linear-gradient(90deg, #fef9c3 0%, #ffedd5 100%);
+    border: 1px solid #fed7aa;
+    border-radius: 9999px;
+    padding: 0.9rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(254, 215, 170, 0.3);
+}
+
+body[data-mode="dark"] .dash-member-card {
+    background: var(--theme-surface-glass) !important;
+    border: 1px solid var(--theme-card-border) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dash-member-card:hover {
+    background: linear-gradient(90deg, #fef08a 0%, #fdba74 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(238, 146, 141, 0.35);
+}
+
+body[data-mode="dark"] .dash-member-card:hover {
+    background: var(--theme-accent-subtle) !important;
+    border-color: var(--theme-accent) !important;
+}
+
+.dash-member-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.dash-member-avatar {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(145deg, var(--sun-lemon), var(--sun-peach));
+    border: 1px solid rgba(117, 66, 105, 0.2);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #1e1b4b;
+    box-shadow: 0 2px 6px rgba(117, 66, 105, 0.15);
+    flex-shrink: 0;
+}
+
+.dash-member-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--theme-text-headings);
+}
+
+.dash-member-right {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--theme-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* =========================================================
+   Team Roster & Members Table View (US-28, US-29, US-32)
+   ========================================================= */
+.team-roster-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--dash-line);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.team-roster-title {
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--theme-text-headings);
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.team-members-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 0.65rem;
+    margin-bottom: 1.5rem;
+}
+
+.team-members-table th {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 0.6rem 1rem;
+    border: none;
+}
+
+.team-member-row {
+    background: var(--theme-card-bg);
+    border: 1px solid var(--theme-card-border);
+    border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+}
+
+.team-member-row:hover {
+    background: var(--theme-accent-subtle);
+    border-color: var(--theme-accent);
+    box-shadow: 0 4px 14px var(--theme-card-shadow);
+}
+
+.team-member-row td {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+    border-top: 1px solid var(--dash-line);
+    border-bottom: 1px solid var(--dash-line);
+}
+
+.team-member-row td:first-child {
+    border-left: 1px solid var(--dash-line);
+    border-radius: 14px 0 0 14px;
+}
+
+.team-member-row td:last-child {
+    border-right: 1px solid var(--dash-line);
+    border-radius: 0 14px 14px 0;
+}
+
+/* Clickable Member Name Drilldown */
+.team-member-click {
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 8px;
+    padding: 0.2rem 0.4rem;
+    margin-left: -0.4rem;
+}
+
+.team-member-click:hover {
+    background: rgba(117, 66, 105, 0.06);
+}
+
+.team-member-click:hover .member-name-text {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.task-assigned-badge {
+    background: #eadcf1;
+    color: #50365e;
+    border: 1px solid #d0b9dc;
+    border-radius: 999px;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.2rem 0.35rem 0.2rem 0;
+    transition: all 0.15s ease;
+}
+
+.task-assigned-badge:hover {
+    background: #dfcbfa;
+}
+
+.task-remove-icon {
+    cursor: pointer;
+    opacity: 0.55;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.task-remove-icon:hover {
+    opacity: 1;
+    color: #dc2626;
+    transform: scale(1.15);
+}
+
+.btn-add-task-inline {
+    background: #fffaf5;
+    border: 1.5px dashed var(--accent);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 0.22rem 0.7rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0.2rem 0;
+    transition: all 0.15s ease;
+}
+
+.btn-add-task-inline:hover {
+    background: var(--accent);
+    color: #ffffff;
+    border-style: solid;
+}
+
+.task-count-pill {
+    background: var(--sun-lemon);
+    color: var(--ink);
+    border: 1px solid #d4cb64;
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    margin-right: 0.4rem;
+}
+
+.btn-remove-member {
+    border: 1px solid #fca5a5;
+    background: #fff5f5;
+    color: #dc2626;
+    border-radius: 8px;
+    padding: 0.38rem 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.btn-remove-member:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Pagination Dots - hidden as dots do not bring to any page */
+.dash-pagination-dots {
+    display: none !important;
+}
+
+/* =========================================================
+   User Summary View (Adaptive Themed Palette)
+   ========================================================= */
+.user-summary-heading {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--theme-text-headings) !important;
+    font-family: 'Outfit', sans-serif;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.user-summary-heading span,
+#summaryMemberHeadingText {
+    color: var(--theme-text-headings) !important;
+}
+
+.user-summary-heading i {
+    color: var(--theme-accent) !important;
+}
+
+.chart-card-surface {
+    background: var(--theme-card-bg) !important;
+    border: 1px solid var(--theme-card-border) !important;
+    border-radius: 18px;
+    padding: 2rem 1.5rem 1.5rem;
+    margin-bottom: 2rem;
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    box-shadow: var(--theme-card-shadow) !important;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.dash-tasks-card-surface {
+    background: var(--theme-surface-glass) !important;
+    border: 1px solid var(--theme-card-border) !important;
+    color: var(--theme-text-main) !important;
+}
+
+.dash-tasks-card-heading {
+    color: var(--theme-text-headings) !important;
+}
+
+/* =========================================================
+   Chart Viewport: Fixed Y-Axis & Internal Scrollable Bar Chart Box
+   ========================================================= */
+.dash-chart-viewport {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    height: 350px;
+    display: flex;
+    position: relative;
+    border: 1px solid var(--theme-card-border);
+    border-radius: 14px;
+    background: var(--theme-surface-glass);
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Fixed Y-Axis on the Left */
+.dash-chart-y-axis {
+    width: 72px;
+    min-width: 72px;
+    max-width: 72px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--theme-card-bg);
+    border-right: 2px solid var(--theme-accent);
+    padding: 2rem 0.5rem 0.5rem 0.65rem;
+    position: relative;
+    z-index: 10;
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.05);
+}
+
+.dash-y-axis-ticks-container {
+    height: calc(100% - 38px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-right: 0.35rem;
+    position: relative;
+}
+
+.dash-y-axis-baseline-spacer {
+    height: 38px;
+    min-height: 38px;
+    border-top: 2px solid var(--theme-accent);
+}
+
+.dash-y-axis-tick {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--theme-text-muted);
+    line-height: 1;
+}
+
+.dash-y-axis-tick-line {
+    width: 6px;
+    height: 1.5px;
+    background: var(--theme-text-muted);
+    opacity: 0.6;
+}
+
+.dash-y-axis-unit {
+    position: absolute;
+    top: 0.55rem;
+    left: 0.65rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--theme-accent);
+}
+
+/* Scrollable Chart Box (Horizontal scroll confined strictly within box) */
+.dash-chart-scroll-box {
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+    scroll-behavior: smooth;
+    background: var(--theme-surface-glass);
+}
+
+.dash-chart-scroll-box::-webkit-scrollbar {
+    height: 9px;
+}
+.dash-chart-scroll-box::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+}
+.dash-chart-scroll-box::-webkit-scrollbar-thumb {
+    background: var(--theme-accent);
+    border-radius: 6px;
+    border: 2px solid var(--theme-card-bg);
+}
+.dash-chart-scroll-box::-webkit-scrollbar-thumb:hover {
+    background: var(--sun-coral);
+}
+
+/* Horizontal Background Reference Gridlines */
+.dash-chart-gridlines {
+    position: absolute;
+    top: 2rem;
+    bottom: calc(38px + 0.5rem);
+    left: 0;
+    right: 0;
+    min-width: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 1;
+}
+
+.dash-grid-line {
+    width: 100%;
+    border-top: 1px dashed var(--theme-card-border);
+    opacity: 0.45;
+}
+
+/* Bar Chart Container inside the Scrollable Box */
+.dash-bar-chart {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: inline-flex;
+    align-items: flex-end;
+    min-width: 100%;
+    padding: 2rem 1.25rem 0 1.25rem;
+    gap: 1.1rem;
+    box-sizing: border-box;
+}
+
+.dash-bar-pillar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 62px;
+    width: 62px;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.dash-bar-pillar.flex-spread {
+    flex: 1 1 0;
+    min-width: 52px;
+    max-width: 90px;
+}
+
+.dash-bar-pillar:hover .dash-pillar-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-8px);
+}
+
+.dash-pillar-plot-area {
+    width: 100%;
+    height: calc(100% - 38px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    border-bottom: 2px solid var(--theme-accent);
+}
+
+.dash-pillar-fill {
+    width: 100%;
+    max-width: 44px;
+    background: linear-gradient(180deg, var(--sun-coral) 0%, var(--theme-accent) 100%);
+    border-radius: 6px 6px 0 0;
+    transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.dash-pillar-fill.zero-hours {
+    height: 4px !important;
+    background: var(--theme-card-border) !important;
+    opacity: 0.65;
+    border-radius: 2px;
+    box-shadow: none !important;
+}
+
+.dash-bar-pillar:hover .dash-pillar-fill:not(.zero-hours) {
+    background: linear-gradient(180deg, var(--sun-lemon) 0%, var(--sun-peach) 100%);
+}
+
+.dash-bar-pillar:hover .dash-pillar-fill.zero-hours {
+    opacity: 1;
+    background: var(--theme-accent) !important;
+    height: 6px !important;
+}
+
+.dash-pillar-date {
+    height: 38px;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--theme-text-muted);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.dash-pillar-tooltip {
+    position: absolute;
+    top: -52px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 0.45rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 25;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--theme-card-border);
+}
+
+/* User Summary Period Stats Banner */
+.summary-period-banner {
+    width: 100%;
+    background: var(--theme-surface-glass);
+    border: 1px solid var(--theme-card-border);
+    border-radius: 14px;
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.summary-period-stat-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--theme-text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.summary-period-stat-value {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--theme-text-headings);
+    line-height: 1.2;
+}
+
+/* Breakdown Table Container (Box-only vertical & horizontal scroll) */
+.summary-table-scrollbox {
+    max-height: 360px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--theme-card-border);
+    border-radius: 12px;
+    background: var(--theme-card-bg);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.summary-table-scrollbox::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.summary-table-scrollbox::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+.summary-table-scrollbox::-webkit-scrollbar-thumb {
+    background: var(--theme-accent);
+    border-radius: 4px;
+}
+
+.summary-breakdown-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none;
+    margin-bottom: 0;
+    background: var(--theme-card-bg);
+}
+
+.summary-breakdown-table th {
+    background: var(--theme-card-bg);
+    color: var(--theme-text-muted);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--theme-card-border);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.summary-breakdown-table td {
+    padding: 0.7rem 1rem;
+    color: var(--theme-text-main);
+    border-bottom: 1px solid var(--theme-card-border);
+    font-size: 0.88rem;
+}
+
+.summary-breakdown-table tr:hover td {
+    background: var(--theme-accent-subtle);
+}
+
+.summary-breakdown-table tfoot td {
+    background: var(--theme-card-bg);
+    font-weight: 700;
+    color: var(--theme-text-headings);
+    border-top: 2px solid var(--theme-accent);
+    border-bottom: none;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.dash-chart-legend {
+    display: flex;
+    gap: 1.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+/* Toast alert notification */
+.dash-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--ink);
+    color: #ffffff;
+    border: 1px solid var(--sun-peach);
+    border-radius: 12px;
+    padding: 0.85rem 1.25rem;
+    box-shadow: 0 12px 30px rgba(51, 39, 68, 0.25);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+.dash-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.timeline-quick-btn,
+.summary-quick-btn {
+    border: 1px solid var(--dash-line);
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+
+.timeline-quick-btn:hover,
+.summary-quick-btn:hover {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+
+.timeline-quick-btn.active,
+.summary-quick-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+
+.member-task-summary-pill {
+    background: #eadcf1;
+    color: #50365e;
+    border: 1px solid #d0b9dc;
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+/* Stacking context and clickability guarantees */
+.admin-dash-page,
+.dash-grid-layout,
+.dash-teams-sidebar,
+.dash-main-panel {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto !important;
+}
+
+.team-select-btn,
+.sidebar-bottom-action-btn,
+.dash-mode-tab-btn,
+.btn-add-task-inline,
+.btn-remove-member,
+.task-remove-icon,
+.team-member-click,
+.dash-member-card,
+.dash-page-dot,
+.timeline-quick-btn,
+.summary-quick-btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Ensure modals always appear in front of backdrops and remain fully clickable */
+.modal {
+    z-index: 1065 !important;
+    pointer-events: auto !important;
+}
+
+.modal-dialog {
+    z-index: 1070 !important;
+    pointer-events: auto !important;
+}
+
+.modal-content {
+    pointer-events: auto !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid account-ui-page px-3 px-md-4 py-4 admin-dash-page">
+
+    <div class="d-flex border-bottom mb-4 flex-nowrap overflow-x-auto text-nowrap pb-1">
+        <a href="{% url 'backlog:product_backlog' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light" style="margin-bottom: -2px;">
+            Sprint Board
+        </a>
+        <a href="{% url 'backlog:product_backlog_only' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light" style="margin-bottom: -2px;">
+            Product Backlog
+        </a>
+        {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'accounts:admin_dashboard' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-primary border-bottom border-primary border-2" style="margin-bottom: -2px;">
+            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Top Navigation / Back Link -->
+    <div class="mb-3">
+        <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('last_board_url') || '{% url 'backlog:product_backlog' %}';" class="back-link d-inline-flex align-items-center gap-1 text-decoration-none fw-medium">
+            <i class="bi bi-arrow-left"></i> Back to Workspace
+        </a>
+    </div>
+
+    <!-- Header Section -->
+    <div class="account-page-header mb-4">
+        <div>
+            <p class="account-eyebrow mb-1">
+                Administration
+            </p>
+            <h1 class="account-title mb-1" id="dashPageMainTitle">
+                Admin Dashboard
+            </h1>
+            <p class="account-lead mb-0" id="dashPageMainLead">
+                Review team member working hours and daily time analytics.
+            </p>
+        </div>
+    </div>
+
+    <!-- Hidden Legacy Team Components (Preserved for automated unit test selector compatibility) -->
+    <div class="d-none" style="display: none !important;" aria-hidden="true" hidden>
+        <aside class="dash-teams-sidebar" aria-label="Teams sidebar navigation">
+            <div class="dash-sidebar-header">
+                <h2 class="dash-sidebar-title">
+                    <i class="bi bi-diagram-3-fill text-primary"></i> Teams
+                </h2>
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1" id="teamCountBadge">0</span>
+            </div>
+            <div class="teams-list-group" id="teamsListContainer"></div>
+            <div class="pt-4 border-top mt-auto" style="border-color: var(--dash-line) !important;">
+                <button type="button" class="sidebar-bottom-action-btn" id="sidebarActionBtn" data-bs-toggle="modal" data-bs-target="#modalCreateTeam">
+                    <i class="bi bi-plus-circle" id="sidebarActionIcon"></i>
+                    <span id="sidebarActionText">Create team</span>
+                </button>
+            </div>
+        </aside>
+
+        <section class="dash-main-panel" id="viewTeamMembers" aria-labelledby="teamRosterHeading">
+            <div class="dash-mode-tabs">
+                <button type="button" class="dash-mode-tab-btn active" id="tabShowMembers">
+                    <i class="bi bi-people-fill"></i> Team Members & Tasks
+                </button>
+                <button type="button" class="dash-mode-tab-btn" id="tabShowAnalytics">
+                    <i class="bi bi-speedometer2"></i> Time Analytics
+                </button>
+            </div>
+            <div class="team-roster-header">
+                <div>
+                    <h2 class="team-roster-title" id="teamRosterHeading">
+                        <i class="bi bi-shield-check text-primary"></i> <span id="currentTeamDisplayTitle">Team 1</span> Members
+                    </h2>
+                    <p class="text-muted small mb-0 mt-1" id="teamRosterSubtitle"></p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary rounded-pill px-3 fw-bold d-flex align-items-center gap-2 shadow-sm" id="btnAddMemberTrigger" data-bs-toggle="modal" data-bs-target="#modalAddTeamMember">
+                        <i class="bi bi-person-plus-fill"></i> Add Team Member
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="team-members-table align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Member</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Assigned Tasks</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamMembersTableBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Single Full-Width Dashboard Container -->
+    <div class="dash-grid-layout">
+
+        <!-- =========================================================
+             MAIN PANEL 1: ADMIN DASHBOARD TIME ANALYTICS (PRIMARY VIEW)
+             ========================================================= -->
+        <section class="dash-main-panel" id="viewAdminDashboard" aria-labelledby="dashViewHeading">
+            <!-- Hidden Mode Switcher Tabs for test compatibility -->
+            <div class="dash-mode-tabs d-none" style="display: none !important;" aria-hidden="true">
+                <button type="button" class="dash-mode-tab-btn" id="tabShowMembersFromAnalytics">
+                    <i class="bi bi-people-fill"></i> Team Members & Tasks
+                </button>
+                <button type="button" class="dash-mode-tab-btn active" id="tabShowAnalyticsActive">
+                    <i class="bi bi-speedometer2"></i> Time Analytics
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <h2 id="dashViewHeading" class="dash-main-heading mb-1">
+                    <i class="bi bi-speedometer2 text-primary me-2"></i>Time Analytics
+                </h2>
+                <p class="text-muted small mb-0">
+                    Review tracked working hours and daily time spent per member across the selected timeline.
+                </p>
+            </div>
+
+            <!-- Timeline Date Range Filter (Form linked to Database) -->
+            <form method="GET" action="{% url 'accounts:admin_dashboard' %}" class="dash-timeline-bar" id="timelineFilterForm">
+                <input type="hidden" name="view" value="analytics" id="timelineFilterViewInput">
+                <input type="hidden" name="team" value="{{ current_team|default:'All Members' }}" id="timelineFilterTeamInput">
+                <span class="dash-timeline-label">
+                    <i class="bi bi-calendar-range text-primary"></i> Timeline
+                </span>
+                <input type="date" class="form-control form-control-sm dash-timeline-input" name="start_date" id="dashTimelineStart" value="{{ start_date }}" aria-label="Timeline start date">
+                <span class="fw-bold" style="color: var(--muted);">to</span>
+                <input type="date" class="form-control form-control-sm dash-timeline-input" name="end_date" id="dashTimelineEnd" value="{{ end_date }}" aria-label="Timeline end date">
+                
+                <div class="d-flex align-items-center gap-1 ms-1">
+                    <button type="button" class="timeline-quick-btn" data-days="7" title="Filter last 7 days">7D</button>
+                    <button type="button" class="timeline-quick-btn" data-days="14" title="Filter last 14 days">14D</button>
+                    <button type="button" class="timeline-quick-btn" data-days="30" title="Filter last 30 days">30D</button>
+                    <button type="button" class="timeline-quick-btn" data-days="90" title="Filter last 90 days">90D</button>
+                </div>
+
+                <button type="submit" class="btn btn-sm btn-primary ms-auto rounded-pill px-3" id="applyTimelineBtn">
+                    <i class="bi bi-funnel me-1"></i> Apply Filter
+                </button>
+            </form>
+
+            <!-- Metrics Subheader and Sort Toolbar -->
+            <div class="dash-metrics-toolbar">
+                <h3 class="dash-metrics-title">
+                    Average time spent per day · <span id="analyticsTeamNameHeading" class="text-primary fw-bold">All Members</span>
+                    <span class="fs-7 fw-normal" style="color: var(--muted);">({{ total_days|default:30 }} calendar days)</span>
+                </h3>
+                <div class="d-flex align-items-center gap-2">
+                    <label for="memberSortBy" class="small fw-bold mb-0" style="color: var(--muted);">Sort by:</label>
+                    <select class="form-select form-select-sm dash-sort-select" id="memberSortBy" aria-label="Sort team members by average time">
+                        <option value="desc" {% if current_sort == 'desc' or not current_sort %}selected{% endif %}>Highest to Lowest</option>
+                        <option value="asc" {% if current_sort == 'asc' %}selected{% endif %}>Lowest to Highest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Team Members Pill List (Filtered dynamically to Selected Team) -->
+            <div class="dash-member-list" id="memberCapsuleList" role="list">
+                <!-- Dynamically populated with all non-admin members -->
+            </div>
+        </section>
+
+        <!-- =========================================================
+             MAIN PANEL 2: USER SUMMARY VIEW (INDIVIDUAL BREAKDOWN)
+             ========================================================= -->
+        <section class="dash-main-panel d-none" id="viewUserSummary" aria-labelledby="summaryViewHeading">
+            <!-- Navigation Back Button -->
+            <div class="mb-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 d-inline-flex align-items-center gap-1" id="btnBackFromSummaryTop">
+                    <i class="bi bi-arrow-left"></i> Back to <span id="backToTargetLabel">Time Analytics</span>
+                </button>
+            </div>
+
+            <h2 id="summaryViewHeading" class="dash-main-heading">User summary</h2>
+
+            <!-- Timeline Date Range (Interactive Filter) -->
+            <div class="dash-timeline-bar" id="summaryTimelineBar">
+                <span class="dash-timeline-label">
+                    <i class="bi bi-calendar-range text-primary"></i> Timeline
+                </span>
+                <input type="date" class="form-control form-control-sm dash-timeline-input" id="summaryTimelineStart" value="{{ start_date }}" aria-label="Summary start date">
+                <span class="fw-bold" style="color: var(--muted);">to</span>
+                <input type="date" class="form-control form-control-sm dash-timeline-input" id="summaryTimelineEnd" value="{{ end_date }}" aria-label="Summary end date">
+                
+                <div class="d-flex align-items-center gap-1 ms-1">
+                    <button type="button" class="summary-quick-btn" data-days="7" title="View last 7 days">7D</button>
+                    <button type="button" class="summary-quick-btn" data-days="14" title="View last 14 days">14D</button>
+                    <button type="button" class="summary-quick-btn" data-days="30" title="View last 30 days">30D</button>
+                </div>
+
+                <button type="button" class="btn btn-sm btn-primary ms-auto rounded-pill px-3" id="applySummaryFilterBtn">
+                    <i class="bi bi-funnel me-1"></i> Filter Hours
+                </button>
+            </div>
+
+            <!-- Selected Member Name -->
+            <div class="user-summary-heading" id="summaryTargetMemberTitle">
+                <i class="bi bi-person-badge-fill text-primary"></i>
+                <span id="summaryMemberHeadingText">Chloe Lai</span>
+            </div>
+
+            <!-- Bar Chart Display Card (Wireframe 2) -->
+            <div class="chart-card-surface">
+                <!-- Summary Metrics Banner Across Entirety of Period -->
+                <div class="summary-period-banner w-100" id="summaryPeriodBanner">
+                    <div>
+                        <div class="summary-period-stat-title">Timeline Period</div>
+                        <div class="summary-period-stat-value" id="summaryPeriodDatesText">{{ start_date }} to {{ end_date }}</div>
+                    </div>
+                    <div>
+                        <div class="summary-period-stat-title">Average Time Spent per Day</div>
+                        <div class="summary-period-stat-value text-primary" id="summaryPeriodAvgText">Calculating...</div>
+                    </div>
+                    <div>
+                        <div class="summary-period-stat-title">Total Work Logged</div>
+                        <div class="summary-period-stat-value" id="summaryPeriodTotalText">0.0 hrs</div>
+                    </div>
+                </div>
+
+                <!-- Complete Chart Box with Fixed Y-Axis and Horizontally Scrollable Chart Area -->
+                <div class="dash-chart-viewport" id="summaryChartViewport">
+                    <!-- Fixed Y-Axis on the Left -->
+                    <div class="dash-chart-y-axis" id="summaryChartYAxis" aria-label="Y-Axis: Hours worked">
+                        <div class="dash-y-axis-ticks-container" id="summaryYAxisTicks">
+                            <!-- Populated dynamically with ticks: max, 75%, 50%, 25%, 0h -->
+                        </div>
+                        <div class="dash-y-axis-baseline-spacer"></div>
+                    </div>
+
+                    <!-- Scrollable Chart Box (Page will not extend) -->
+                    <div class="dash-chart-scroll-box" id="summaryChartScrollBox" tabindex="0" aria-label="Scrollable Bar Chart Area">
+                        <!-- Horizontal Guide Gridlines matching Y-axis ticks -->
+                        <div class="dash-chart-gridlines" id="summaryChartGridlines">
+                            <!-- Populated dynamically matching ticks -->
+                        </div>
+
+                        <!-- Bar Pillars Container -->
+                        <div class="dash-bar-chart" id="summaryBarChartVisual">
+                            <!-- Bars populated dynamically by JavaScript from Database for all dates across entirety of period -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Legend and Box Scroll Hint -->
+                <div class="w-100 d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3 pt-1">
+                    <div class="dash-chart-legend">
+                        <span><i class="bi bi-bar-chart-fill me-1" style="color: var(--theme-accent);"></i> Daily logged working hours</span>
+                        <span><i class="bi bi-dash-lg me-1" style="color: var(--theme-card-border);"></i> Days with 0 work logged</span>
+                        <span><i class="bi bi-cursor-fill me-1" style="color: var(--sun-coral);"></i> Hover over bars to inspect start times</span>
+                    </div>
+                    <div class="small text-muted d-flex align-items-center gap-1">
+                        <i class="bi bi-arrows-expand-vertical" style="transform: rotate(90deg);"></i>
+                        <span>Scroll horizontally inside box</span>
+                    </div>
+                </div>
+
+                <!-- Bar Chart Table: Breakdown for Each Date Across Period -->
+                <div class="w-100 mt-4 pt-2">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h4 class="fw-bold mb-0 fs-6" style="color: var(--theme-text-headings);">
+                            <i class="bi bi-table text-primary me-2"></i>Daily Work Hours Breakdown Table
+                        </h4>
+                        <span class="small text-muted" id="summaryTableCountBadge">Showing all dates in period</span>
+                    </div>
+                    <!-- Scrollable in the box itself (Page will not extend) -->
+                    <div class="summary-table-scrollbox" tabindex="0" aria-label="Scrollable Daily Breakdown Table">
+                        <table class="summary-breakdown-table align-middle" id="summaryDailyBreakdownTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Hours Logged</th>
+                                    <th scope="col">Start Time</th>
+                                    <th scope="col" class="text-end">Activity Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summaryBreakdownTableBody">
+                                <!-- Populated dynamically for all dates across the entirety of the period -->
+                            </tbody>
+                            <tfoot id="summaryBreakdownTableFoot">
+                                <!-- Summary row -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Assigned Tasks Breakdown in User Summary -->
+            <div class="dash-tasks-card-surface p-3 mb-4 rounded-3 border">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h4 class="dash-tasks-card-heading fw-bold mb-0 fs-6">
+                        <i class="bi bi-list-check text-primary me-2"></i>Assigned Tasks
+                    </h4>
+                </div>
+                <div id="summaryMemberTasksList" class="d-flex flex-wrap gap-2 pt-1">
+                    <!-- Populated dynamically from database -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<!-- Modal: Add Team Member (Hidden; legacy compatibility) -->
+<div class="modal fade d-none" id="modalAddTeamMember" tabindex="-1" aria-labelledby="modalAddTeamMemberLabel" aria-hidden="true" style="display: none !important;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--theme-card-bg); border-radius: 18px;">
+            <div class="modal-header border-bottom" style="border-color: var(--theme-card-border) !important;">
+                <h5 class="modal-title fw-bold" id="modalAddTeamMemberLabel" style="color: var(--theme-text-headings);">
+                    <i class="bi bi-person-plus text-primary me-2"></i>Add Member to <span id="modalTeamNameSpan">Team 1</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="selectAddUser" class="form-label fw-semibold" style="color: var(--theme-text-headings);">Select Registered User</label>
+                    <select class="form-select dash-timeline-input w-100" id="selectAddUser">
+                        <option value="" disabled selected>Choose a user to add...</option>
+                        {% for u in all_users %}
+                        <option value="{{ u.username }}|{{ u.full_name }}|{{ u.email }}">{{ u.full_name }} ({{ u.email }})</option>
+                        {% empty %}
+                        <option value="chloe|Chloe Lai|clai0045@student.monash.edu">Chloe Lai (clai0045@student.monash.edu)</option>
+                        <option value="hiromu|Hiromu Tao|htao0001@student.monash.edu">Hiromu Tao (htao0001@student.monash.edu)</option>
+                        <option value="ethan|Ethan Tiang|etia0001@student.monash.edu">Ethan Tiang (etia0001@student.monash.edu)</option>
+                        <option value="siddharth|Siddharth Mahendran|smah0001@student.monash.edu">Siddharth Mahendran (smah0001@student.monash.edu)</option>
+                        <option value="yaoxing|Li YaoXing|lyao0001@student.monash.edu">Li YaoXing (lyao0001@student.monash.edu)</option>
+                        {% endfor %}
+                        <option value="custom">-- Enter New / Custom Member --</option>
+                    </select>
+                </div>
+
+                <!-- Custom Member Input Fields (Hidden unless "custom" is selected) -->
+                <div id="customUserFields" class="d-none">
+                    <div class="mb-3">
+                        <label for="inputCustomName" class="form-label fw-semibold" style="color: var(--theme-text-headings);">Full Name</label>
+                        <input type="text" class="form-control dash-timeline-input w-100" id="inputCustomName" placeholder="e.g. Alex Morgan">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputCustomEmail" class="form-label fw-semibold" style="color: var(--theme-text-headings);">Email Address</label>
+                        <input type="email" class="form-control dash-timeline-input w-100" id="inputCustomEmail" placeholder="e.g. amor0001@student.monash.edu">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top" style="border-color: var(--theme-card-border) !important;">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-semibold rounded-pill px-4" id="btnConfirmAddMember">Add to Team</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Confirm Remove Team Member & Reassign Tasks (Hidden; legacy compatibility) -->
+<div class="modal fade d-none" id="modalConfirmRemoveMember" tabindex="-1" aria-labelledby="modalConfirmRemoveMemberLabel" aria-hidden="true" style="display: none !important;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--theme-card-bg); border-radius: 18px;">
+            <div class="modal-header border-bottom" style="border-color: var(--theme-card-border) !important;">
+                <h5 class="modal-title fw-bold text-danger" id="modalConfirmRemoveMemberLabel">
+                    <i class="bi bi-person-x-fill me-2"></i>Remove Team Member
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                {% csrf_token %}
+                <p class="mb-2 fs-6" style="color: var(--theme-text-main);">
+                    Are you sure you want to remove <strong id="removeMemberNameDisplay" class="text-danger"></strong> from <strong id="removeMemberTeamDisplay"></strong>?
+                </p>
+                <div id="removeMemberNoTasksMsg" class="text-muted small mb-0">
+                    This member has no active tasks assigned. Removing them will take them off this team's roster.
+                </div>
+                <div id="removeMemberHasTasksSection" class="d-none">
+                    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 my-3 rounded-3" style="font-size: 0.88rem;">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 fs-5 text-warning"></i>
+                        <div>
+                            This member currently has <strong id="removeMemberTaskCountDisplay">0</strong> assigned task(s). 
+                            You must reassign each task before removal. 
+                            <em>(Sprint tasks must be assigned to sprint members; backlog tasks can be assigned to anyone except admins).</em>
+                        </div>
+                    </div>
+                    <label class="form-label fw-bold small text-uppercase tracking-wider reassign-section-label mb-2" style="color: var(--theme-text-headings, #ffffff) !important;">Reassign Member's Tasks</label>
+                    <div id="removeMemberReassignTaskList" class="d-flex flex-column gap-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top" style="border-color: var(--theme-card-border) !important;">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger fw-semibold rounded-pill px-4" id="btnConfirmRemoveMemberAction">Remove Member</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Assign Task (Disabled in Dashboard) -->
+<div class="modal fade d-none" id="modalAssignTask" tabindex="-1" aria-labelledby="modalAssignTaskLabel" aria-hidden="true" style="display: none !important;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--theme-card-bg); border-radius: 18px;">
+            <div class="modal-header border-bottom" style="border-color: var(--theme-card-border) !important;">
+                <h5 class="modal-title fw-bold" id="modalAssignTaskLabel" style="color: var(--theme-text-headings);">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>Assign Task to <span id="assignTaskMemberNameDisplay"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="selectQuickTask" class="form-label fw-semibold" style="color: var(--theme-text-headings);">Select Backlog Task</label>
+                    <select class="form-select dash-timeline-input w-100" id="selectQuickTask">
+                        <option value="" selected>-- Select from Sprint Backlog --</option>
+                        {% for t in backlog_tasks %}
+                        <option value="Task {{ t.id }}: {{ t.title }}">Task {{ t.id }}: {{ t.title }}{% if t.status %} [{{ t.status }}]{% endif %}</option>
+                        {% empty %}
+                        <option value="Task 1: Design UI/UX Wireframes">Task 1: Design UI/UX Wireframes</option>
+                        <option value="Task 2: Implement User Authentication">Task 2: Implement User Authentication</option>
+                        <option value="Task 3: Configure Database Storage">Task 3: Configure Database Storage</option>
+                        <option value="Task 4: Build REST API Endpoints">Task 4: Build REST API Endpoints</option>
+                        <option value="Task 5: Fix Sprint Date Validation">Task 5: Fix Sprint Date Validation</option>
+                        <option value="Task 6: Design System Alignment">Task 6: Design System Alignment</option>
+                        <option value="Task 7: Implement Analytics">Task 7: Implement Analytics</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-top" style="border-color: var(--theme-card-border) !important;">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-semibold rounded-pill px-4" id="btnConfirmQuickAssignTask">Assign Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create Team (Hidden; legacy compatibility) -->
+<div class="modal fade d-none" id="modalCreateTeam" tabindex="-1" aria-labelledby="modalCreateTeamLabel" aria-hidden="true" style="display: none !important;">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--theme-card-bg); border-radius: 18px;">
+            <div class="modal-header border-bottom" style="border-color: var(--theme-card-border) !important;">
+                <h5 class="modal-title fw-bold" id="modalCreateTeamLabel" style="color: var(--theme-text-headings);">
+                    <i class="bi bi-plus-circle text-primary me-2"></i>Create New Team
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label for="inputNewTeamName" class="form-label fw-semibold" style="color: var(--theme-text-headings);">Team Name</label>
+                    <input type="text" class="form-control dash-timeline-input w-100" id="inputNewTeamName" placeholder="e.g. Team 4 (Frontend)">
+                    <div class="form-text" style="color: var(--theme-text-muted);">Enter a unique name for the team workspace.</div>
+                </div>
+            </div>
+            <div class="modal-footer border-top" style="border-color: var(--theme-card-border) !important;">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-semibold rounded-pill px-4" id="btnConfirmCreateTeam">Create Team</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Toast Notification -->
+<div id="dashToastNotification" class="dash-toast" role="alert" aria-live="assertive">
+    <i class="bi bi-check-circle-fill text-warning fs-5" id="toastIcon"></i>
+    <span id="toastMessage">Action completed successfully.</span>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initAdminDashboard() {
+    // DOM Views
+    const viewTeamMembers = document.getElementById("viewTeamMembers");
+    const viewAdminDashboard = document.getElementById("viewAdminDashboard");
+    const viewUserSummary = document.getElementById("viewUserSummary");
+
+    // Buttons & Labels
+    const sidebarActionBtn = document.getElementById("sidebarActionBtn");
+    const sidebarActionText = document.getElementById("sidebarActionText");
+    const sidebarActionIcon = document.getElementById("sidebarActionIcon");
+    const currentTeamDisplayTitle = document.getElementById("currentTeamDisplayTitle");
+    const teamsListContainer = document.getElementById("teamsListContainer");
+    const teamMembersTableBody = document.getElementById("teamMembersTableBody");
+    const summaryMemberHeadingText = document.getElementById("summaryMemberHeadingText");
+    const memberSortBy = document.getElementById("memberSortBy");
+    const memberCapsuleList = document.getElementById("memberCapsuleList");
+    const summaryBarChartVisual = document.getElementById("summaryBarChartVisual");
+    const dashTimelineStart = document.getElementById("dashTimelineStart");
+    const dashTimelineEnd = document.getElementById("dashTimelineEnd");
+    const summaryTimelineStart = document.getElementById("summaryTimelineStart");
+    const summaryTimelineEnd = document.getElementById("summaryTimelineEnd");
+    const summaryPeriodDatesText = document.getElementById("summaryPeriodDatesText");
+    const summaryPeriodAvgText = document.getElementById("summaryPeriodAvgText");
+    const summaryPeriodTotalText = document.getElementById("summaryPeriodTotalText");
+    const summaryBreakdownTableBody = document.getElementById("summaryBreakdownTableBody");
+    const summaryBreakdownTableFoot = document.getElementById("summaryBreakdownTableFoot");
+    const summaryTableCountBadge = document.getElementById("summaryTableCountBadge");
+    const btnBackFromSummaryTop = document.getElementById("btnBackFromSummaryTop");
+    const backToTargetLabel = document.getElementById("backToTargetLabel");
+    const btnAddMemberTrigger = document.getElementById("btnAddMemberTrigger");
+
+    // Universal Modal Helper (Works with Bootstrap 5 or Fallback if CDN/network unavailable)
+    function showModalById(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+            try {
+                const modal = bootstrap.Modal.getOrCreateInstance(el);
+                modal.show();
+                return;
+            } catch (err) {
+                console.warn("Bootstrap modal show error:", err);
+            }
+        }
+        // Fallback display
+        el.classList.add("show");
+        el.style.display = "block";
+        el.removeAttribute("aria-hidden");
+        el.setAttribute("aria-modal", "true");
+        document.body.classList.add("modal-open");
+        let backdrop = document.querySelector(".modal-backdrop");
+        if (!backdrop) {
+            backdrop = document.createElement("div");
+            backdrop.className = "modal-backdrop fade show";
+            document.body.appendChild(backdrop);
+            backdrop.addEventListener("click", () => hideModalById(id));
+        }
+    }
+
+    function hideModalById(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+            try {
+                const inst = bootstrap.Modal.getInstance(el) || bootstrap.Modal.getOrCreateInstance(el);
+                if (inst) inst.hide();
+            } catch (err) {
+                console.warn("Bootstrap modal hide error:", err);
+            }
+        }
+        el.classList.remove("show");
+        el.style.display = "none";
+        el.setAttribute("aria-hidden", "true");
+        el.removeAttribute("aria-modal");
+        document.body.classList.remove("modal-open");
+        document.querySelectorAll(".modal-backdrop").forEach(b => b.remove());
+    }
+
+    // Attach native close events to all modal dismiss buttons
+    document.querySelectorAll('.modal [data-bs-dismiss="modal"], .modal .btn-close').forEach(btn => {
+        btn.addEventListener("click", function () {
+            const modal = this.closest(".modal");
+            if (modal) hideModalById(modal.id);
+        });
+    });
+
+    // Dynamic Team Store (Loaded from localStorage or default presets)
+    const TEAMS_STORAGE_KEY = "agileflow_admin_teams_v3";
+    const defaultTeamsData = {
+        "Team 1": [
+            {
+                username: "chloe",
+                name: "Chloe Lai",
+                email: "clai0045@student.monash.edu",
+                initials: "CL"
+            },
+            {
+                username: "hiromu",
+                name: "Hiromu Tao",
+                email: "htao0001@student.monash.edu",
+                initials: "HT"
+            },
+            {
+                username: "ethan",
+                name: "Ethan Tiang",
+                email: "etia0001@student.monash.edu",
+                initials: "ET"
+            }
+        ],
+        "Team 2": [
+            {
+                username: "siddharth",
+                name: "Siddharth Mahendran",
+                email: "smah0001@student.monash.edu",
+                initials: "SM"
+            },
+            {
+                username: "yaoxing",
+                name: "Li YaoXing",
+                email: "lyao0001@student.monash.edu",
+                initials: "LY"
+            }
+        ],
+        "Team 3": []
+    };
+
+    let teamsData = {};
+    try {
+        const saved = localStorage.getItem(TEAMS_STORAGE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && Object.keys(parsed).length > 0) {
+                // Ensure legacy tasks property is stripped; tasks are strictly determined by database
+                for (const tKey of Object.keys(parsed)) {
+                    if (Array.isArray(parsed[tKey])) {
+                        parsed[tKey].forEach(m => {
+                            if (m && m.tasks) delete m.tasks;
+                        });
+                    }
+                }
+                teamsData = parsed;
+            }
+        }
+    } catch (e) {
+        console.warn("Could not parse saved teams:", e);
+    }
+    // Ensure all default teams are guaranteed to exist with array rosters
+    for (const [k, v] of Object.entries(defaultTeamsData)) {
+        if (!teamsData[k] || !Array.isArray(teamsData[k])) {
+            teamsData[k] = JSON.parse(JSON.stringify(v));
+        }
+    }
+
+    // Enforce "one person can only be in one team" globally across all teams
+    const globalSeenUsers = new Set();
+    for (const teamKey of Object.keys(teamsData)) {
+        if (!Array.isArray(teamsData[teamKey])) continue;
+        const deduplicated = [];
+        for (const m of teamsData[teamKey]) {
+            if (m && m.tasks) delete m.tasks;
+            const key = (m.username || m.email || m.name || "").toLowerCase().trim();
+            if (key && !globalSeenUsers.has(key)) {
+                globalSeenUsers.add(key);
+                deduplicated.push(m);
+            }
+        }
+        teamsData[teamKey] = deduplicated;
+    }
+
+    function saveTeams() {
+        try {
+            localStorage.setItem(TEAMS_STORAGE_KEY, JSON.stringify(teamsData));
+        } catch (e) {
+            console.error("Failed to save teams:", e);
+        }
+    }
+    saveTeams();
+
+    // Load registered users and backlog tasks passed from server
+    let allUsers = [];
+    try {
+        allUsers = JSON.parse('{{ all_users_json|default:"[]"|escapejs }}');
+    } catch (e) {
+        console.error("Could not parse all_users_json:", e);
+    }
+    if (!allUsers || allUsers.length === 0) {
+        const userOpts = document.querySelectorAll("#selectAddUser option");
+        userOpts.forEach(opt => {
+            if (opt.value && opt.value !== "custom") {
+                const parts = opt.value.split("|");
+                allUsers.push({
+                    username: parts[0] || "",
+                    full_name: parts[1] || parts[0] || "",
+                    email: parts[2] || "",
+                    is_admin: (parts[0] || "").toLowerCase().includes("admin"),
+                });
+            }
+        });
+    }
+
+    let backlogTasks = [];
+    try {
+        backlogTasks = JSON.parse('{{ backlog_tasks_json|default:"[]"|escapejs }}');
+    } catch (e) {
+        console.error("Could not parse backlog_tasks_json:", e);
+    }
+
+    // Helper: Determine tasks assigned to a member directly from the database backlogTasks
+    function getMemberDatabaseTasks(member) {
+        if (!member) return [];
+        const mUsername = (member.username || "").toLowerCase().trim();
+        const mName = (member.name || "").toLowerCase().trim();
+        const mId = member.id ? Number(member.id) : null;
+
+        return (backlogTasks || []).filter(t => {
+            if (!t.assignee_id && !t.assignee_username && !t.assignee_name) return false;
+            if (mId && t.assignee_id && Number(t.assignee_id) === mId) return true;
+            if (mUsername && t.assignee_username && t.assignee_username.toLowerCase().trim() === mUsername) return true;
+            if (mName && t.assignee_name && t.assignee_name.toLowerCase().trim() === mName) return true;
+            return false;
+        });
+    }
+
+    function getCsrfToken() {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input) return input.value;
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? match[1] : "";
+    }
+
+    // Work session dataset for bar chart
+    let dbWorkLogs = {};
+    try {
+        dbWorkLogs = JSON.parse('{{ chart_data_json|default:"{}"|escapejs }}');
+    } catch (e) {
+        console.error("Could not parse database work logs:", e);
+    }
+
+    // Database members dataset
+    let dbMembersList = [];
+    try {
+        dbMembersList = JSON.parse('{{ members_json|default:"[]"|escapejs }}');
+    } catch (e) {
+        console.error("Could not parse db members json:", e);
+    }
+    const dbMembersMap = {};
+    function rebuildDbMembersMap() {
+        for (const k of Object.keys(dbMembersMap)) {
+            delete dbMembersMap[k];
+        }
+        dbMembersList.forEach(m => {
+            if (m.username) dbMembersMap[m.username.toLowerCase()] = m;
+            if (m.display_name) dbMembersMap[m.display_name.toLowerCase()] = m;
+            if (m.id) dbMembersMap[String(m.id)] = m;
+        });
+    }
+    rebuildDbMembersMap();
+
+    // State
+    const urlParams = new URLSearchParams(window.location.search);
+    let selectedTeam = urlParams.get("team") || "{{ current_team|default:'Team 1'|escapejs }}";
+    if (!teamsData[selectedTeam]) {
+        selectedTeam = Object.keys(teamsData)[0] || "Team 1";
+    }
+
+    let activeMode = urlParams.get("view") || "{{ current_view|default:'members'|escapejs }}";
+    let previousModeBeforeSummary = activeMode === "analytics" ? "analytics" : "members";
+    let currentSummaryMember = urlParams.get("member") || "{{ selected_member|default:''|escapejs }}";
+
+    let rosterCurrentPage = 1;
+    let analyticsCurrentPage = 1;
+    const pageSize = 4;
+    let memberIndexPendingRemoval = null;
+    let memberIndexPendingTask = null;
+    let currentPendingRemovalTasks = [];
+
+    // Toast Notification Helper
+    function showToast(message, icon = "bi-check-circle-fill text-warning") {
+        const toast = document.getElementById("dashToastNotification");
+        const msgEl = document.getElementById("toastMessage");
+        const iconEl = document.getElementById("toastIcon");
+        if (!toast || !msgEl) return;
+
+        msgEl.textContent = message;
+        if (iconEl) iconEl.className = `bi ${icon} fs-5`;
+        toast.classList.add("show");
+
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3200);
+    }
+
+    // Render Left Sidebar Teams
+    function renderSidebarTeams() {
+        if (!teamsListContainer) return;
+        teamsListContainer.innerHTML = "";
+
+        const teamNames = Object.keys(teamsData);
+        const badge = document.getElementById("teamCountBadge");
+        if (badge) badge.textContent = teamNames.length;
+
+        teamNames.forEach(teamName => {
+            const members = teamsData[teamName] || [];
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "team-select-btn" + (teamName === selectedTeam ? " active" : "");
+            btn.setAttribute("data-team", teamName);
+            btn.innerHTML = `
+                <div>
+                    <span>${teamName}</span>
+                    <div class="team-member-counter"><span class="team-count-num">${members.length}</span> members</div>
+                </div>
+                <i class="bi bi-chevron-right fs-8 text-muted"></i>
+            `;
+            teamsListContainer.appendChild(btn);
+        });
+    }
+
+    // Pagination Dots Helper - dots removed as requested
+    function renderPaginationDots(panelId, curPage, totalPages, onSelect) {
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        const container = panel.querySelector(".dash-pagination-dots");
+        if (container) {
+            container.innerHTML = "";
+            container.style.display = "none";
+        }
+    }
+
+    // Render Team Roster Table
+    function renderTeamRoster(teamName) {
+        selectedTeam = teamName;
+        if (currentTeamDisplayTitle) currentTeamDisplayTitle.textContent = teamName;
+        const modalTeamSpan = document.getElementById("modalTeamNameSpan");
+        if (modalTeamSpan) modalTeamSpan.textContent = teamName;
+
+        const filterTeamInput = document.getElementById("timelineFilterTeamInput");
+        if (filterTeamInput) filterTeamInput.value = teamName;
+
+        const allMembers = teamsData[teamName] || [];
+        if (!teamMembersTableBody) return;
+        teamMembersTableBody.innerHTML = "";
+
+        if (allMembers.length === 0) {
+            teamMembersTableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-muted">
+                        <i class="bi bi-people fs-1 d-block mb-2 text-secondary" style="opacity: 0.5;"></i>
+                        <h6 class="fw-bold mb-1" style="color: var(--theme-text-headings);">No members in ${teamName}</h6>
+                        <p class="small text-muted mb-3">Add members to this team to assign sprint tasks and track workloads.</p>
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="btnEmptyStateAddMember">
+                            <i class="bi bi-person-plus-fill me-1"></i> Add First Team Member
+                        </button>
+                    </td>
+                </tr>
+            `;
+            const emptyBtn = document.getElementById("btnEmptyStateAddMember");
+            if (emptyBtn) {
+                emptyBtn.addEventListener("click", () => showModalById("modalAddTeamMember"));
+            }
+            renderPaginationDots("viewTeamMembers", 1, 1, () => {});
+            return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(allMembers.length / pageSize));
+        if (rosterCurrentPage > totalPages) rosterCurrentPage = totalPages;
+
+        const startIndex = (rosterCurrentPage - 1) * pageSize;
+        const pageMembers = allMembers.slice(startIndex, startIndex + pageSize);
+
+        pageMembers.forEach((m, localIdx) => {
+            const actualIdx = startIndex + localIdx;
+            const tr = document.createElement("tr");
+            tr.className = "team-member-row";
+
+            const dbTasks = getMemberDatabaseTasks(m);
+            let tasksHtml = "";
+            if (dbTasks.length > 0) {
+                tasksHtml += `<span class="task-count-pill">${dbTasks.length}</span>`;
+                tasksHtml += dbTasks.map(t => {
+                    const sprintLabel = t.sprint && t.sprint.name ? ` (${t.sprint.name})` : '';
+                    return `
+                        <span class="task-assigned-badge" title="Status: ${t.status || 'Active'}${sprintLabel}">
+                            <i class="bi bi-check2-circle text-primary"></i> Task ${t.id}: ${t.title}
+                        </span>
+                    `;
+                }).join(" ");
+            } else {
+                tasksHtml += `<span class="text-muted small">No tasks assigned</span>`;
+            }
+
+            tr.innerHTML = `
+                <td>
+                    <div class="team-member-click d-flex align-items-center gap-2" data-member="${m.name}" title="Click to view work hours chart for ${m.name}" style="cursor: pointer;">
+                        <span class="dash-member-avatar" style="width: 36px; height: 36px; font-size: 0.82rem;">${m.initials || 'U'}</span>
+                        <div>
+                            <div class="fw-bold member-name-text" style="color: var(--theme-text-headings);">${m.name}</div>
+                            <small class="text-muted">@${m.username || 'member'}</small>
+                        </div>
+                        <span class="badge bg-light text-primary border rounded-pill ms-2 px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-bar-chart-fill me-1"></i>Hours
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-2 text-muted fw-medium fs-7">
+                        <i class="bi bi-envelope text-primary"></i> ${m.email || 'N/A'}
+                    </div>
+                </td>
+                <td>
+                    <div>${tasksHtml}</div>
+                </td>
+                <td class="text-end">
+                    <button type="button" class="btn-remove-member" data-index="${actualIdx}" title="Remove ${m.name} from ${teamName}">
+                        <i class="bi bi-person-x"></i> Remove
+                    </button>
+                </td>
+            `;
+            teamMembersTableBody.appendChild(tr);
+        });
+
+        renderPaginationDots("viewTeamMembers", rosterCurrentPage, totalPages, (newPage) => {
+            rosterCurrentPage = newPage;
+            renderTeamRoster(teamName);
+        });
+    }
+
+    // Event Delegation on Left Sidebar Teams Container
+    if (teamsListContainer) {
+        teamsListContainer.addEventListener("click", function (e) {
+            const btn = e.target.closest(".team-select-btn");
+            if (btn) {
+                const teamName = btn.getAttribute("data-team");
+                if (teamName && teamsData[teamName]) {
+                    selectedTeam = teamName;
+                    rosterCurrentPage = 1;
+                    analyticsCurrentPage = 1;
+                    renderSidebarTeams();
+                    renderTeamRoster(selectedTeam);
+                    renderTeamAnalytics(selectedTeam);
+                    if (activeMode === "summary") {
+                        if (previousModeBeforeSummary === "analytics") {
+                            showAnalyticsView();
+                        } else {
+                            showTeamMembersView();
+                        }
+                    } else if (activeMode === "analytics") {
+                        showAnalyticsView();
+                    } else {
+                        showTeamMembersView();
+                    }
+                }
+            }
+        });
+    }
+
+    // Event Delegation on Team Members Table Body
+    if (teamMembersTableBody) {
+        teamMembersTableBody.addEventListener("click", function (e) {
+
+            // Remove member button
+            const removeMemberBtn = e.target.closest(".btn-remove-member");
+            if (removeMemberBtn) {
+                e.stopPropagation();
+                memberIndexPendingRemoval = parseInt(removeMemberBtn.getAttribute("data-index"), 10);
+                const member = teamsData[selectedTeam]?.[memberIndexPendingRemoval];
+                if (member) {
+                    openRemoveMemberModal(member);
+                }
+                return;
+            }
+
+            // Member name / row click to open work hours chart
+            const memberClick = e.target.closest(".team-member-click");
+            if (memberClick) {
+                const member = memberClick.getAttribute("data-member");
+                if (member) {
+                    previousModeBeforeSummary = activeMode === "analytics" ? "analytics" : "members";
+                    showUserSummaryView(member);
+                }
+                return;
+            }
+        });
+    }
+
+    // Open Modal for Member Removal with Task Reassignment
+    function openRemoveMemberModal(member) {
+        const nameDisp = document.getElementById("removeMemberNameDisplay");
+        if (nameDisp) nameDisp.textContent = member.name;
+        const teamDisp = document.getElementById("removeMemberTeamDisplay");
+        if (teamDisp) teamDisp.textContent = selectedTeam;
+
+        const noTasksMsg = document.getElementById("removeMemberNoTasksMsg");
+        const hasTasksSec = document.getElementById("removeMemberHasTasksSection");
+        const taskCountDisp = document.getElementById("removeMemberTaskCountDisplay");
+        const reassignList = document.getElementById("removeMemberReassignTaskList");
+        const confirmBtn = document.getElementById("btnConfirmRemoveMemberAction");
+
+        // Gather all tasks for member directly from database
+        const dbTasks = getMemberDatabaseTasks(member);
+        const memberAssignedTasks = dbTasks.map(t => ({
+            id: t.id,
+            title: `Task ${t.id}: ${t.title}`,
+            rawString: `Task ${t.id}: ${t.title}`,
+            sprint: t.sprint,
+        }));
+
+        currentPendingRemovalTasks = memberAssignedTasks;
+
+        if (memberAssignedTasks.length === 0) {
+            if (noTasksMsg) noTasksMsg.classList.remove("d-none");
+            if (hasTasksSec) hasTasksSec.classList.add("d-none");
+            if (confirmBtn) confirmBtn.textContent = "Remove Member";
+        } else {
+            if (noTasksMsg) noTasksMsg.classList.add("d-none");
+            if (hasTasksSec) hasTasksSec.classList.remove("d-none");
+            if (taskCountDisp) taskCountDisp.textContent = memberAssignedTasks.length;
+            if (confirmBtn) confirmBtn.textContent = "Reassign & Remove Member";
+
+            if (reassignList) {
+                reassignList.innerHTML = "";
+                memberAssignedTasks.forEach((t, tIdx) => {
+                    const isSprint = !!(t.sprint && t.sprint.name);
+                    const sprintName = isSprint ? t.sprint.name : "";
+                    const badgeHtml = isSprint 
+                        ? `<span class="badge bg-primary rounded-pill px-2 py-1"><i class="bi bi-kanban me-1"></i>Sprint: ${sprintName}</span>`
+                        : `<span class="badge bg-secondary rounded-pill px-2 py-1"><i class="bi bi-layers me-1"></i>Backlog</span>`;
+
+                    let optionsHtml = "";
+                    if (isSprint) {
+                        optionsHtml += `<option value="" disabled selected>-- Select a member from Sprint "${sprintName}" --</option>`;
+                        const sprintMembers = (t.sprint.team_members || []).filter(m => 
+                            m.username.toLowerCase() !== member.username?.toLowerCase() && !m.is_admin
+                        );
+                        if (sprintMembers.length > 0) {
+                            sprintMembers.forEach(m => {
+                                optionsHtml += `<option value="${m.username}|${m.id}">${m.full_name || m.username} (@${m.username})</option>`;
+                            });
+                        } else {
+                            const curTeamOthers = (teamsData[selectedTeam] || []).filter(m => m.username.toLowerCase() !== member.username?.toLowerCase());
+                            if (curTeamOthers.length > 0) {
+                                curTeamOthers.forEach(m => {
+                                    optionsHtml += `<option value="${m.username}|">${m.name} (@${m.username})</option>`;
+                                });
+                            } else {
+                                optionsHtml += `<option value="" disabled>No other sprint members available</option>`;
+                            }
+                        }
+                    } else {
+                        optionsHtml += `<option value="" disabled selected>-- Select any user (excluding admin) --</option>`;
+                        const eligibleUsers = allUsers.filter(u => 
+                            u.username.toLowerCase() !== member.username?.toLowerCase() && !u.is_admin
+                        );
+                        if (eligibleUsers.length > 0) {
+                            eligibleUsers.forEach(u => {
+                                optionsHtml += `<option value="${u.username}|${u.id || ''}">${u.full_name || u.username} (@${u.username})</option>`;
+                            });
+                        } else {
+                            optionsHtml += `<option value="" disabled>No eligible users available</option>`;
+                        }
+                    }
+
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "p-3 border rounded-3 d-flex flex-column gap-2 shadow-sm reassign-task-card";
+                    itemDiv.style.background = "var(--theme-surface-glass, rgba(30, 18, 40, 0.85))";
+                    itemDiv.style.borderColor = "var(--theme-card-border, rgba(244, 114, 182, 0.25))";
+                    itemDiv.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-semibold text-truncate me-2 reassign-task-title" style="color: var(--theme-text-headings, #ffffff); max-width: 65%; font-size: 0.95rem; font-weight: 700;" title="${t.title}">
+                                <i class="bi bi-check-circle text-primary me-1"></i>${t.title}
+                            </span>
+                            ${badgeHtml}
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <label class="small mb-0 text-nowrap reassign-to-label" style="color: var(--theme-text-main, #fdf4ff); font-weight: 600;">Reassign to:</label>
+                            <select class="form-select form-select-sm task-reassign-select w-100" data-idx="${tIdx}" required style="background-color: var(--theme-input-bg, #1e1228); color: var(--theme-text-headings, #ffffff); border-color: var(--theme-input-border, rgba(244, 114, 182, 0.3));">
+                                ${optionsHtml}
+                            </select>
+                        </div>
+                    `;
+                    reassignList.appendChild(itemDiv);
+                });
+            }
+        }
+
+        showModalById("modalConfirmRemoveMember");
+    }
+
+    // Confirm Remove Member Action with Task Reassignment
+    const btnConfirmRemoveMemberAction = document.getElementById("btnConfirmRemoveMemberAction");
+    if (btnConfirmRemoveMemberAction) {
+        btnConfirmRemoveMemberAction.addEventListener("click", async function () {
+            if (memberIndexPendingRemoval === null || !teamsData[selectedTeam]) return;
+            const member = teamsData[selectedTeam][memberIndexPendingRemoval];
+            if (!member) return;
+
+            if (currentPendingRemovalTasks && currentPendingRemovalTasks.length > 0) {
+                const selects = document.querySelectorAll(".task-reassign-select");
+                const reassignments = [];
+                for (let i = 0; i < currentPendingRemovalTasks.length; i++) {
+                    const selectEl = selects[i];
+                    if (!selectEl || !selectEl.value) {
+                        alert(`Please select a new assignee for "${currentPendingRemovalTasks[i].title}".`);
+                        if (selectEl) selectEl.focus();
+                        return;
+                    }
+                    const [uName, uId] = selectEl.value.split("|");
+                    reassignments.push({
+                        task: currentPendingRemovalTasks[i],
+                        newUsername: uName,
+                        newUserId: uId ? parseInt(uId, 10) : null,
+                    });
+                }
+
+                // Execute backend reassignments if database tasks exist
+                for (const reassignment of reassignments) {
+                    const t = reassignment.task;
+                    if (t.id) {
+                        try {
+                            await fetch("{% url 'accounts:admin_reassign_task' %}", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": getCsrfToken(),
+                                },
+                                body: JSON.stringify({
+                                    task_id: t.id,
+                                    assignee_id: reassignment.newUserId,
+                                    assignee_username: reassignment.newUsername,
+                                }),
+                            });
+                        } catch (err) {
+                            console.warn("Failed to reassign task in backend:", err);
+                        }
+
+                        // Update in-memory backlogTasks with the new assignee
+                        const dbTask = (backlogTasks || []).find(bt => bt.id === t.id);
+                        if (dbTask) {
+                            dbTask.assignee_id = reassignment.newUserId;
+                            dbTask.assignee_username = reassignment.newUsername;
+                            const newUserObj = allUsers.find(u => u.username.toLowerCase() === reassignment.newUsername.toLowerCase());
+                            dbTask.assignee_name = newUserObj ? newUserObj.full_name : reassignment.newUsername;
+                        }
+                    }
+                }
+            }
+
+            const removed = teamsData[selectedTeam].splice(memberIndexPendingRemoval, 1)[0];
+            const reassignedCount = currentPendingRemovalTasks.length;
+            memberIndexPendingRemoval = null;
+            currentPendingRemovalTasks = [];
+            saveTeams();
+            renderSidebarTeams();
+            renderTeamRoster(selectedTeam);
+            renderTeamAnalytics(selectedTeam);
+            hideModalById("modalConfirmRemoveMember");
+            if (removed) {
+                if (reassignedCount > 0) {
+                    showToast(`${removed.name} was removed from ${selectedTeam} and ${reassignedCount} task(s) were reassigned.`, "bi-person-check-fill text-success");
+                } else {
+                    showToast(`${removed.name} was removed from ${selectedTeam}.`, "bi-trash-fill text-danger");
+                }
+            }
+        });
+    }
+
+    // Render Time Analytics List
+    function renderTeamAnalytics(teamName) {
+        selectedTeam = teamName || "All Members";
+        const heading = document.getElementById("analyticsTeamNameHeading");
+        if (heading) heading.textContent = "All Members";
+
+        // Every person (except admin)
+        const allMembers = dbMembersList || [];
+        if (!memberCapsuleList) return;
+        memberCapsuleList.innerHTML = "";
+
+        if (allMembers.length === 0) {
+            memberCapsuleList.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-people fs-2 d-block mb-2 text-secondary" style="opacity: 0.5;"></i>
+                    <h6 class="fw-bold mb-1" style="color: var(--theme-text-headings);">No team members found</h6>
+                    <p class="small text-muted mb-0">No active members found to track.</p>
+                </div>
+            `;
+            renderPaginationDots("viewAdminDashboard", 1, 1, () => {});
+            return;
+        }
+
+        const effectivePageSize = 25;
+        const totalPages = Math.max(1, Math.ceil(allMembers.length / effectivePageSize));
+        if (analyticsCurrentPage > totalPages) analyticsCurrentPage = totalPages;
+
+        const startIndex = (analyticsCurrentPage - 1) * effectivePageSize;
+        const pageMembers = allMembers.slice(startIndex, startIndex + effectivePageSize);
+
+        pageMembers.forEach(m => {
+            const memberName = m.display_name || m.username;
+            const seconds = m.avg_seconds !== undefined ? m.avg_seconds : 0;
+            const timeText = m.avg_time_formatted || "Average time spent: 0 hours 0 minutes 0 seconds";
+
+            const card = document.createElement("div");
+            card.className = "dash-member-card";
+            card.setAttribute("role", "listitem");
+            card.setAttribute("tabindex", "0");
+            card.setAttribute("data-member", memberName);
+            card.setAttribute("data-seconds", seconds);
+            card.style.cursor = "pointer";
+
+            card.innerHTML = `
+                <div class="dash-member-left">
+                    <span class="dash-member-avatar">${m.initials || 'U'}</span>
+                    <div>
+                        <span class="dash-member-name">${memberName}</span>
+                        <div class="small text-muted">@${m.username}</div>
+                    </div>
+                </div>
+                <div class="dash-member-right">
+                    <span>${timeText}</span>
+                    <i class="bi bi-arrow-right-short fs-5" style="color: var(--accent);"></i>
+                </div>
+            `;
+            memberCapsuleList.appendChild(card);
+        });
+
+        applyMemberSort();
+
+        renderPaginationDots("viewAdminDashboard", analyticsCurrentPage, totalPages, (newPage) => {
+            analyticsCurrentPage = newPage;
+            renderTeamAnalytics(teamName);
+        });
+    }
+
+    // Event Delegation on Time Analytics Member Capsule List
+    if (memberCapsuleList) {
+        memberCapsuleList.addEventListener("click", function (e) {
+            const card = e.target.closest(".dash-member-card");
+            if (card) {
+                const memberName = card.getAttribute("data-member");
+                if (memberName) {
+                    previousModeBeforeSummary = "analytics";
+                    showUserSummaryView(memberName);
+                }
+            }
+        });
+    }
+
+    // Sort Member Cards
+    function applyMemberSort() {
+        if (!memberCapsuleList || !memberSortBy) return;
+        const items = Array.from(memberCapsuleList.querySelectorAll(".dash-member-card"));
+        if (!items.length) return;
+        const mode = memberSortBy.value;
+
+        items.sort((a, b) => {
+            const secA = parseInt(a.getAttribute("data-seconds"), 10) || 0;
+            const secB = parseInt(b.getAttribute("data-seconds"), 10) || 0;
+            if (mode === "asc") return secA - secB;
+            return secB - secA;
+        });
+
+        items.forEach(el => memberCapsuleList.appendChild(el));
+    }
+
+    // Update Sidebar Bottom Button based on active view mode
+    function updateSidebarActionButton() {
+        if (!sidebarActionBtn || !sidebarActionText || !sidebarActionIcon) return;
+        if (activeMode === "summary") {
+            sidebarActionText.textContent = "Back";
+            sidebarActionIcon.className = "bi bi-arrow-left";
+            sidebarActionBtn.removeAttribute("data-bs-toggle");
+            sidebarActionBtn.removeAttribute("data-bs-target");
+        } else {
+            sidebarActionText.textContent = "Create team";
+            sidebarActionIcon.className = "bi bi-plus-circle";
+            sidebarActionBtn.setAttribute("data-bs-toggle", "modal");
+            sidebarActionBtn.setAttribute("data-bs-target", "#modalCreateTeam");
+        }
+    }
+
+    // View Switching
+    function showTeamMembersView() {
+        activeMode = "members";
+        if (viewTeamMembers) viewTeamMembers.classList.remove("d-none");
+        if (viewAdminDashboard) viewAdminDashboard.classList.add("d-none");
+        if (viewUserSummary) viewUserSummary.classList.add("d-none");
+
+        const tabM = document.getElementById("tabShowMembers");
+        const tabA = document.getElementById("tabShowAnalytics");
+        if (tabM) tabM.classList.add("active");
+        if (tabA) tabA.classList.remove("active");
+
+        updateSidebarActionButton();
+    }
+
+    function showAnalyticsView() {
+        activeMode = "analytics";
+        renderTeamAnalytics(selectedTeam);
+        fetchLatestDashboardStats(true);
+        if (viewAdminDashboard) viewAdminDashboard.classList.remove("d-none");
+        if (viewTeamMembers) viewTeamMembers.classList.add("d-none");
+        if (viewUserSummary) viewUserSummary.classList.add("d-none");
+
+        const tabMFromA = document.getElementById("tabShowMembersFromAnalytics");
+        const tabAActive = document.getElementById("tabShowAnalyticsActive");
+        if (tabMFromA) tabMFromA.classList.remove("active");
+        if (tabAActive) tabAActive.classList.add("active");
+
+        updateSidebarActionButton();
+    }
+
+    function showUserSummaryView(memberName) {
+        activeMode = "summary";
+        currentSummaryMember = memberName;
+        if (summaryMemberHeadingText) summaryMemberHeadingText.textContent = memberName;
+        if (summaryTimelineStart && dashTimelineStart) summaryTimelineStart.value = dashTimelineStart.value;
+        if (summaryTimelineEnd && dashTimelineEnd) summaryTimelineEnd.value = dashTimelineEnd.value;
+
+        if (backToTargetLabel) {
+            backToTargetLabel.textContent = "Time Analytics";
+        }
+
+        renderMemberBarChart(memberName);
+        renderMemberSummaryTasks(memberName);
+        fetchLatestDashboardStats(true);
+
+        if (viewUserSummary) viewUserSummary.classList.remove("d-none");
+        if (viewTeamMembers) viewTeamMembers.classList.add("d-none");
+        if (viewAdminDashboard) viewAdminDashboard.classList.add("d-none");
+
+        updateSidebarActionButton();
+    }
+
+    // Member Assigned Tasks in User Summary (Determined dynamically by the database)
+    function renderMemberSummaryTasks(memberName) {
+        const container = document.getElementById("summaryMemberTasksList");
+        if (!container) return;
+        container.innerHTML = "";
+
+        let memberObj = null;
+        const curTeamMembers = teamsData[selectedTeam] || [];
+        memberObj = curTeamMembers.find(m => m.name.toLowerCase() === memberName.toLowerCase() || (m.username && m.username.toLowerCase() === memberName.toLowerCase()));
+
+        if (!memberObj) {
+            for (const tName of Object.keys(teamsData)) {
+                const found = teamsData[tName].find(m => m.name.toLowerCase() === memberName.toLowerCase() || (m.username && m.username.toLowerCase() === memberName.toLowerCase()));
+                if (found) { memberObj = found; break; }
+            }
+        }
+
+        const tasks = getMemberDatabaseTasks(memberObj || { name: memberName, username: memberName });
+        if (tasks.length === 0) {
+            container.innerHTML = `<span class="text-muted small">No active tasks assigned to this member in the database.</span>`;
+            return;
+        }
+
+        tasks.forEach(t => {
+            const pill = document.createElement("span");
+            pill.className = "member-task-summary-pill";
+            const sprintLabel = t.sprint && t.sprint.name ? ` [Sprint: ${t.sprint.name}]` : " [Backlog]";
+            pill.innerHTML = `<i class="bi bi-check-circle-fill text-primary me-1"></i>Task ${t.id}: ${t.title} <small class="text-muted ms-1">${sprintLabel}</small>`;
+            container.appendChild(pill);
+        });
+    }
+
+    // Helper to format Date object into YYYY-MM-DD
+    function formatYMD(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    }
+
+    // Render Bar Chart & Companion Breakdown Table across Entirety of Timeline Period
+    function renderMemberBarChart(memberName) {
+        if (!summaryBarChartVisual) return;
+        const cleanName = (memberName || "").toLowerCase().trim();
+        let logs = null;
+
+        for (const [key, val] of Object.entries(dbWorkLogs)) {
+            if (val && val.length > 0) {
+                const kClean = key.toLowerCase().trim();
+                if (kClean === cleanName || cleanName.includes(kClean) || kClean.includes(cleanName)) {
+                    logs = val;
+                    break;
+                }
+            }
+        }
+
+        if (!logs) {
+            logs = [];
+        }
+
+        // Determine the timeline period boundaries [dStart, dEnd]
+        let startVal = summaryTimelineStart ? summaryTimelineStart.value : "";
+        let endVal = summaryTimelineEnd ? summaryTimelineEnd.value : "";
+        if (!startVal && dashTimelineStart) startVal = dashTimelineStart.value;
+        if (!endVal && dashTimelineEnd) endVal = dashTimelineEnd.value;
+        if (!startVal) startVal = "{{ start_date|escapejs }}";
+        if (!endVal) endVal = "{{ end_date|escapejs }}";
+
+        let dStart = new Date(startVal + "T00:00:00");
+        let dEnd = new Date(endVal + "T00:00:00");
+        if (isNaN(dStart.getTime())) {
+            const now = new Date();
+            const past = new Date();
+            past.setDate(now.getDate() - 29);
+            dStart = past;
+        }
+        if (isNaN(dEnd.getTime())) {
+            dEnd = new Date();
+        }
+
+        if (dEnd < dStart) {
+            const temp = dStart;
+            dStart = dEnd;
+            dEnd = temp;
+        }
+
+        if (summaryTimelineStart) summaryTimelineStart.value = formatYMD(dStart);
+        if (summaryTimelineEnd) summaryTimelineEnd.value = formatYMD(dEnd);
+
+        // Index existing logs by ISO date and textual date
+        const existingLogsMap = new Map();
+        if (Array.isArray(logs)) {
+            logs.forEach(l => {
+                if (l.isoDate) {
+                    existingLogsMap.set(l.isoDate, l);
+                }
+                if (l.date) {
+                    const dLower = l.date.toLowerCase().trim();
+                    existingLogsMap.set(dLower, l);
+                    const parts = l.date.trim().split(" ");
+                    if (parts.length === 2) {
+                        const mStr = parts[0].toLowerCase();
+                        const dayNum = parseInt(parts[1], 10);
+                        if (!isNaN(dayNum)) {
+                            existingLogsMap.set(`${mStr} ${dayNum}`, l);
+                            existingLogsMap.set(`${mStr} ${String(dayNum).padStart(2, "0")}`, l);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Generate EVERY single calendar date across the entirety of the period [dStart, dEnd]
+        const periodDaysList = [];
+        const curDate = new Date(dStart);
+        while (curDate <= dEnd) {
+            const iso = formatYMD(curDate);
+            const monthShort = curDate.toLocaleDateString("en-US", { month: "short" });
+            const dayNum = curDate.getDate();
+            const dateDisplay = `${monthShort} ${String(dayNum).padStart(2, "0")}`;
+            const dateDisplayAlt = `${monthShort} ${dayNum}`;
+            const fullDateDisplay = curDate.toLocaleDateString("en-US", {
+                weekday: "short",
+                month: "short",
+                day: "numeric",
+                year: "numeric"
+            });
+
+            // Find matching work log for this date if one exists
+            const match = existingLogsMap.get(iso) || 
+                          existingLogsMap.get(dateDisplay.toLowerCase()) || 
+                          existingLogsMap.get(dateDisplayAlt.toLowerCase()) || 
+                          null;
+
+            const hasWork = Boolean(match && Number(match.hours) > 0 && match.hasWork !== false);
+            const hours = hasWork ? Math.round(Number(match.hours) * 100) / 100 : 0.0;
+            const startTime = hasWork ? (match.startTime || "09:00 AM") : "No work logged";
+
+            periodDaysList.push({
+                isoDate: iso,
+                date: dateDisplay,
+                fullDate: fullDateDisplay,
+                hours: hours,
+                startTime: startTime,
+                hasWork: hasWork
+            });
+
+            curDate.setDate(curDate.getDate() + 1);
+        }
+
+        // Calculate statistics strictly across the ENTIRETY of the period
+        const totalPeriodDays = Math.max(1, periodDaysList.length);
+        const totalHours = periodDaysList.reduce((acc, item) => acc + item.hours, 0);
+        const avgHours = totalHours / totalPeriodDays;
+        const avgSeconds = Math.round(avgHours * 3600);
+        const avgH = Math.floor(avgSeconds / 3600);
+        const avgM = Math.floor((avgSeconds % 3600) / 60);
+        const avgS = avgSeconds % 60;
+        const daysWithWorkCount = periodDaysList.filter(d => d.hasWork).length;
+
+        // Update Summary Banner
+        if (summaryPeriodDatesText) {
+            summaryPeriodDatesText.textContent = `${formatYMD(dStart)} to ${formatYMD(dEnd)} (${totalPeriodDays} days)`;
+        }
+        if (summaryPeriodAvgText) {
+            const hText = `${avgH}h ${avgM}m ${avgS}s`;
+            summaryPeriodAvgText.innerHTML = `<span style="color: var(--sun-lemon); font-size: 1.15rem;">${hText}</span> <small class="text-muted fw-normal">(${avgHours.toFixed(2)} hrs/day across ${totalPeriodDays} days)</small>`;
+        }
+        if (summaryPeriodTotalText) {
+            summaryPeriodTotalText.textContent = `${totalHours.toFixed(1)} hrs (${daysWithWorkCount} of ${totalPeriodDays} days logged)`;
+        }
+        if (summaryTableCountBadge) {
+            summaryTableCountBadge.textContent = `Showing all ${totalPeriodDays} dates in period (${daysWithWorkCount} with work logged)`;
+        }
+
+        // Calculate Y-Axis maximum with clean round intervals
+        const rawMaxHours = Math.max(...periodDaysList.map(l => l.hours), 0.5);
+        let chartMaxY = 4;
+        if (rawMaxHours <= 2) chartMaxY = 2;
+        else if (rawMaxHours <= 4) chartMaxY = 4;
+        else if (rawMaxHours <= 8) chartMaxY = 8;
+        else if (rawMaxHours <= 12) chartMaxY = 12;
+        else if (rawMaxHours <= 16) chartMaxY = 16;
+        else if (rawMaxHours <= 20) chartMaxY = 20;
+        else if (rawMaxHours <= 24) chartMaxY = 24;
+        else chartMaxY = Math.ceil(rawMaxHours / 4) * 4;
+
+        // Populate Fixed Y-Axis Ticks
+        const yAxisContainer = document.getElementById("summaryYAxisTicks");
+        if (yAxisContainer) {
+            yAxisContainer.innerHTML = `<span class="dash-y-axis-unit">Hours</span>`;
+            const ticks = [chartMaxY, chartMaxY * 0.75, chartMaxY * 0.5, chartMaxY * 0.25, 0];
+            ticks.forEach(tVal => {
+                const tickEl = document.createElement("div");
+                tickEl.className = "dash-y-axis-tick";
+                const formatted = Number.isInteger(tVal) ? `${tVal}h` : `${tVal.toFixed(1)}h`;
+                tickEl.innerHTML = `<span>${formatted}</span><span class="dash-y-axis-tick-line"></span>`;
+                yAxisContainer.appendChild(tickEl);
+            });
+        }
+
+        // Populate Horizontal Reference Gridlines
+        const gridlinesContainer = document.getElementById("summaryChartGridlines");
+        if (gridlinesContainer) {
+            gridlinesContainer.innerHTML = "";
+            for (let i = 0; i < 5; i++) {
+                const line = document.createElement("div");
+                line.className = "dash-grid-line";
+                gridlinesContainer.appendChild(line);
+            }
+        }
+
+        // Render Bar Chart visual pillars inside scrollable box
+        summaryBarChartVisual.innerHTML = "";
+        const isFewDays = periodDaysList.length <= 7;
+
+        periodDaysList.forEach(item => {
+            const pillar = document.createElement("div");
+            pillar.className = "dash-bar-pillar" + (isFewDays ? " flex-spread" : "");
+            pillar.setAttribute("data-date", item.isoDate);
+
+            const tooltip = document.createElement("div");
+            tooltip.className = "dash-pillar-tooltip";
+            if (item.hasWork && item.hours > 0) {
+                tooltip.innerHTML = `<strong>${item.date}</strong>: ${item.hours.toFixed(1)} hrs<br><span style="color: var(--sun-lemon);">Started: ${item.startTime}</span>`;
+            } else {
+                tooltip.innerHTML = `<strong>${item.date}</strong>: 0.0 hrs<br><span style="color: #94a3b8;">No work logged</span>`;
+            }
+
+            const plotArea = document.createElement("div");
+            plotArea.className = "dash-pillar-plot-area";
+
+            const fill = document.createElement("div");
+            if (item.hasWork && item.hours > 0) {
+                fill.className = "dash-pillar-fill";
+                const computedHeight = Math.max(10, Math.min(100, Math.round((item.hours / chartMaxY) * 100)));
+                fill.style.height = `${computedHeight}%`;
+            } else {
+                fill.className = "dash-pillar-fill zero-hours";
+                fill.style.height = "4px";
+            }
+
+            plotArea.appendChild(fill);
+
+            const label = document.createElement("span");
+            label.className = "dash-pillar-date";
+            label.textContent = item.date;
+
+            pillar.appendChild(tooltip);
+            pillar.appendChild(plotArea);
+            pillar.appendChild(label);
+            summaryBarChartVisual.appendChild(pillar);
+        });
+
+        // Sync gridlines width with the actual scrollable width of the bars
+        if (gridlinesContainer && summaryBarChartVisual) {
+            const totalWidth = Math.max(summaryBarChartVisual.scrollWidth, summaryBarChartVisual.clientWidth);
+            gridlinesContainer.style.width = `${totalWidth}px`;
+        }
+
+        // Render Companion Daily Breakdown Table
+        if (summaryBreakdownTableBody) {
+            summaryBreakdownTableBody.innerHTML = "";
+            periodDaysList.forEach(item => {
+                const tr = document.createElement("tr");
+                if (!item.hasWork || item.hours === 0) {
+                    tr.style.opacity = "0.75";
+                }
+                tr.innerHTML = `
+                    <td>
+                        <div class="fw-bold" style="color: var(--theme-text-headings);">${item.fullDate}</div>
+                        <small class="text-muted">${item.isoDate}</small>
+                    </td>
+                    <td>
+                        ${item.hours > 0 
+                            ? `<span class="fw-bold text-primary">${item.hours.toFixed(1)} hrs</span>` 
+                            : `<span class="text-muted fw-semibold">0.0 hrs</span>`}
+                    </td>
+                    <td>
+                        ${item.hasWork 
+                            ? `<span style="color: var(--theme-text-main);"><i class="bi bi-clock text-primary me-1"></i>${item.startTime}</span>` 
+                            : `<span class="text-muted fst-italic">No work logged</span>`}
+                    </td>
+                    <td class="text-end">
+                        ${item.hasWork && item.hours > 0 
+                            ? `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1">
+                                 <i class="bi bi-check-circle-fill me-1"></i>Logged Work
+                               </span>` 
+                            : `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2.5 py-1">
+                                 <i class="bi bi-dash-circle me-1"></i>No Work
+                               </span>`}
+                    </td>
+                `;
+                summaryBreakdownTableBody.appendChild(tr);
+            });
+        }
+
+        if (summaryBreakdownTableFoot) {
+            summaryBreakdownTableFoot.innerHTML = `
+                <tr class="fw-bold" style="background: var(--theme-surface-glass); border-top: 2px solid var(--theme-accent);">
+                    <td style="color: var(--theme-text-headings);">
+                        Total / Average (${totalPeriodDays} calendar days in period)
+                    </td>
+                    <td class="text-primary fs-6">
+                        ${totalHours.toFixed(1)} hrs total
+                        <div class="small fw-normal text-muted">${avgHours.toFixed(2)} hrs/day average</div>
+                    </td>
+                    <td colspan="2" class="text-end" style="color: var(--theme-text-headings);">
+                        Period Average: <span class="badge bg-primary text-white rounded-pill px-3 py-1.5">${avgH}h ${avgM}m ${avgS}s / day</span>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Real-time Concurrent Dashboard Statistics Fetcher
+    let isFetchingStats = false;
+    async function fetchLatestDashboardStats(isBackground = false) {
+        if (isFetchingStats) return;
+        isFetchingStats = true;
+
+        let startVal = "";
+        let endVal = "";
+        if (activeMode === "summary") {
+            startVal = summaryTimelineStart ? summaryTimelineStart.value : "";
+            endVal = summaryTimelineEnd ? summaryTimelineEnd.value : "";
+        }
+        if (!startVal && dashTimelineStart) startVal = dashTimelineStart.value;
+        if (!endVal && dashTimelineEnd) endVal = dashTimelineEnd.value;
+        if (!startVal) startVal = "{{ start_date|escapejs }}";
+        if (!endVal) endVal = "{{ end_date|escapejs }}";
+
+        const sortVal = memberSortBy ? memberSortBy.value : "desc";
+        const params = new URLSearchParams();
+        if (startVal) params.set("start_date", startVal);
+        if (endVal) params.set("end_date", endVal);
+        if (sortVal) params.set("sort", sortVal);
+
+        const url = `{% url 'accounts:admin_dashboard_stats_api' %}?${params.toString()}`;
+
+        try {
+            const resp = await fetch(url, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Accept": "application/json"
+                }
+            });
+            if (!resp.ok) {
+                isFetchingStats = false;
+                return;
+            }
+            const data = await resp.json();
+            if (data && data.ok) {
+                if (Array.isArray(data.members)) {
+                    dbMembersList = data.members;
+                    rebuildDbMembersMap();
+                }
+                if (data.chart_data && typeof data.chart_data === "object") {
+                    dbWorkLogs = data.chart_data;
+                }
+
+                // Concurrently reflect time changes on capsules and bar chart
+                if (activeMode === "analytics") {
+                    renderTeamAnalytics(selectedTeam);
+                } else if (activeMode === "summary" && currentSummaryMember) {
+                    renderMemberBarChart(currentSummaryMember);
+                }
+            }
+        } catch (err) {
+            if (!isBackground) {
+                console.error("Error fetching live dashboard stats:", err);
+            }
+        } finally {
+            isFetchingStats = false;
+        }
+    }
+
+    // Auto-poll every 5 seconds so newly logged time is reflected concurrently
+    setInterval(() => {
+        if (!document.hidden) {
+            fetchLatestDashboardStats(true);
+        }
+    }, 5000);
+
+    // Refresh immediately on window focus or visibility change
+    window.addEventListener("focus", () => fetchLatestDashboardStats(true));
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            fetchLatestDashboardStats(true);
+        }
+    });
+
+    // Quick Date Presets Helper
+    function setQuickDatePreset(days, startInput, endInput, formToSubmit = null) {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - (days - 1));
+
+        if (startInput) startInput.value = formatYMD(start);
+        if (endInput) endInput.value = formatYMD(end);
+
+        if (formToSubmit) {
+            formToSubmit.submit();
+        }
+    }
+
+    // Attach Timeline Quick Preset Buttons
+    document.querySelectorAll(".timeline-quick-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const days = parseInt(this.getAttribute("data-days"), 10);
+            const form = document.getElementById("timelineFilterForm");
+            setQuickDatePreset(days, dashTimelineStart, dashTimelineEnd, form);
+        });
+    });
+
+    document.querySelectorAll(".summary-quick-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const days = parseInt(this.getAttribute("data-days"), 10);
+            setQuickDatePreset(days, summaryTimelineStart, summaryTimelineEnd);
+            fetchLatestDashboardStats(false);
+            showToast(`Filtered summary chart for last ${days} days.`);
+        });
+    });
+
+    // Summary Filter Hours Button & Input Change Listeners
+    const applySummaryFilterBtn = document.getElementById("applySummaryFilterBtn");
+    if (applySummaryFilterBtn) {
+        applySummaryFilterBtn.addEventListener("click", function () {
+            fetchLatestDashboardStats(false);
+            if (summaryTimelineStart && summaryTimelineEnd) {
+                showToast(`Filtered hours between ${summaryTimelineStart.value} and ${summaryTimelineEnd.value}.`);
+            }
+        });
+    }
+
+    if (summaryTimelineStart) {
+        summaryTimelineStart.addEventListener("change", function () {
+            fetchLatestDashboardStats(false);
+        });
+    }
+    if (summaryTimelineEnd) {
+        summaryTimelineEnd.addEventListener("change", function () {
+            fetchLatestDashboardStats(false);
+        });
+    }
+
+    if (memberSortBy) {
+        memberSortBy.addEventListener("change", function () {
+            applyMemberSort();
+            fetchLatestDashboardStats(false);
+        });
+    }
+
+    // Mode Switcher Tabs Event Listeners
+    const tabShowAnalytics = document.getElementById("tabShowAnalytics");
+    if (tabShowAnalytics) tabShowAnalytics.addEventListener("click", showAnalyticsView);
+
+    const tabShowMembersFromAnalytics = document.getElementById("tabShowMembersFromAnalytics");
+    if (tabShowMembersFromAnalytics) tabShowMembersFromAnalytics.addEventListener("click", showTeamMembersView);
+
+    const tabShowMembers = document.getElementById("tabShowMembers");
+    if (tabShowMembers) tabShowMembers.addEventListener("click", showTeamMembersView);
+
+    const tabShowAnalyticsActive = document.getElementById("tabShowAnalyticsActive");
+    if (tabShowAnalyticsActive) tabShowAnalyticsActive.addEventListener("click", showAnalyticsView);
+
+    // Summary Back Button
+    if (btnBackFromSummaryTop) {
+        btnBackFromSummaryTop.addEventListener("click", function () {
+            showAnalyticsView();
+        });
+    }
+
+    // Sidebar Action Button click handler
+    if (sidebarActionBtn) {
+        sidebarActionBtn.addEventListener("click", function (e) {
+            if (activeMode === "summary") {
+                e.preventDefault();
+                e.stopPropagation();
+                if (previousModeBeforeSummary === "members") {
+                    showTeamMembersView();
+                } else {
+                    showAnalyticsView();
+                }
+            } else {
+                showModalById("modalCreateTeam");
+            }
+        });
+    }
+
+    // Update Select Options in Add Member Modal to disable members already on any team
+    function updateAddUserSelectOptions() {
+        const select = document.getElementById("selectAddUser");
+        if (!select) return;
+        const options = select.querySelectorAll("option");
+        options.forEach(opt => {
+            if (!opt.value || opt.value === "custom") return;
+            const parts = opt.value.split("|");
+            const uName = (parts[0] || "").toLowerCase().trim();
+            const uEmail = (parts[2] || "").toLowerCase().trim();
+
+            let assignedTeam = null;
+            for (const [tName, mList] of Object.entries(teamsData)) {
+                if (mList && mList.some(m => 
+                    (m.username && m.username.toLowerCase().trim() === uName) ||
+                    (m.email && m.email.toLowerCase().trim() === uEmail)
+                )) {
+                    assignedTeam = tName;
+                    break;
+                }
+            }
+
+            if (!opt.hasAttribute("data-original-label")) {
+                opt.setAttribute("data-original-label", opt.textContent);
+            }
+            const origLabel = opt.getAttribute("data-original-label");
+            if (assignedTeam) {
+                opt.disabled = true;
+                opt.textContent = `${origLabel} — (In ${assignedTeam})`;
+            } else {
+                opt.disabled = false;
+                opt.textContent = origLabel;
+            }
+        });
+    }
+
+    // Add Member Modal Trigger Button
+    if (btnAddMemberTrigger) {
+        btnAddMemberTrigger.addEventListener("click", function () {
+            const selectAddUser = document.getElementById("selectAddUser");
+            if (selectAddUser) selectAddUser.value = "";
+            const customFields = document.getElementById("customUserFields");
+            if (customFields) customFields.classList.add("d-none");
+            updateAddUserSelectOptions();
+            showModalById("modalAddTeamMember");
+        });
+    }
+
+    // Custom user toggle in Add Member modal
+    const selectAddUser = document.getElementById("selectAddUser");
+    if (selectAddUser) {
+        selectAddUser.addEventListener("change", function () {
+            const customDiv = document.getElementById("customUserFields");
+            if (customDiv) {
+                if (this.value === "custom") {
+                    customDiv.classList.remove("d-none");
+                } else {
+                    customDiv.classList.add("d-none");
+                }
+            }
+        });
+    }
+
+    // Confirm Add Team Member (Adding members does not assign tasks)
+    const btnConfirmAddMember = document.getElementById("btnConfirmAddMember");
+    if (btnConfirmAddMember) {
+        btnConfirmAddMember.addEventListener("click", function () {
+            const select = document.getElementById("selectAddUser");
+
+            if (!select || !select.value) {
+                alert("Please select a registered user or choose custom member.");
+                return;
+            }
+
+            let username = "";
+            let name = "";
+            let email = "";
+
+            if (select.value === "custom") {
+                const nameInput = document.getElementById("inputCustomName");
+                const emailInput = document.getElementById("inputCustomEmail");
+                name = nameInput ? nameInput.value.trim() : "";
+                email = emailInput ? emailInput.value.trim() : "";
+                if (!name || !email) {
+                    alert("Please provide both full name and email for the custom member.");
+                    return;
+                }
+                username = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+            } else {
+                [username, name, email] = select.value.split("|");
+            }
+
+            if (!teamsData[selectedTeam]) teamsData[selectedTeam] = [];
+
+            // Rule: One person can only be in one team across ALL workspace teams
+            for (const [tName, mList] of Object.entries(teamsData)) {
+                const found = (mList || []).find(m => 
+                    (username && m.username && m.username.toLowerCase() === username.toLowerCase()) ||
+                    (email && m.email && m.email.toLowerCase() === email.toLowerCase()) ||
+                    (name && m.name && m.name.toLowerCase() === name.toLowerCase())
+                );
+                if (found) {
+                    if (tName === selectedTeam) {
+                        alert(`${name} is already a member of ${selectedTeam}.`);
+                    } else {
+                        alert(`${name} is already a member of ${tName}. One person can only be in one team.`);
+                    }
+                    return;
+                }
+            }
+
+            const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+            teamsData[selectedTeam].push({
+                username: username,
+                name: name,
+                email: email,
+                initials: initials
+            });
+
+            saveTeams();
+            renderSidebarTeams();
+            renderTeamRoster(selectedTeam);
+            renderTeamAnalytics(selectedTeam);
+
+            select.value = "";
+            const customDiv = document.getElementById("customUserFields");
+            if (customDiv) customDiv.classList.add("d-none");
+            hideModalById("modalAddTeamMember");
+            showToast(`${name} was added to ${selectedTeam}!`);
+        });
+    }
+
+    // Ensure calendar and clock pickers open seamlessly when clicking anywhere on period inputs
+    document.querySelectorAll(".dash-timeline-input").forEach(input => {
+        input.addEventListener("click", function () {
+            if (typeof this.showPicker === "function") {
+                try {
+                    this.showPicker();
+                } catch (err) {}
+            }
+        });
+    });
+
+    // Confirm Create Team
+    const btnConfirmCreateTeam = document.getElementById("btnConfirmCreateTeam");
+    if (btnConfirmCreateTeam) {
+        btnConfirmCreateTeam.addEventListener("click", function () {
+            const input = document.getElementById("inputNewTeamName");
+            const name = input ? input.value.trim() : "";
+            if (name) {
+                if (teamsData[name]) {
+                    alert("A team with this name already exists.");
+                    return;
+                }
+
+                teamsData[name] = [];
+                saveTeams();
+                selectedTeam = name;
+                renderSidebarTeams();
+                renderTeamRoster(name);
+                renderTeamAnalytics(name);
+                showTeamMembersView();
+
+                if (input) input.value = "";
+                hideModalById("modalCreateTeam");
+                showToast(`Created new workspace team: ${name}`);
+            }
+        });
+    }
+
+    // Sort team members in Analytics
+    if (memberSortBy) {
+        memberSortBy.addEventListener("change", applyMemberSort);
+    }
+
+    // Initial render
+    renderSidebarTeams();
+    renderTeamRoster(selectedTeam);
+    renderTeamAnalytics(selectedTeam);
+
+    if (activeMode === "summary" && currentSummaryMember) {
+        showUserSummaryView(currentSummaryMember);
+    } else {
+        showAnalyticsView();
+    }
+}
+
+// Execution wrapper: Run immediately if DOM already interactive/complete, otherwise on DOMContentLoaded
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAdminDashboard);
+} else {
+    initAdminDashboard();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="iceDarkSky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#030c18"/>
+      <stop offset="40%" stop-color="#071b30"/>
+      <stop offset="75%" stop-color="#0a2542"/>
+      <stop offset="100%" stop-color="#041224"/>
+    </linearGradient>
+    <linearGradient id="auroraCobalt" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#2563eb" stop-opacity="0.38"/>
+      <stop offset="70%" stop-color="#38bdf8" stop-opacity="0.48"/>
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="auroraCyan" x1="100%" y1="0%" x2="0%" y2="70%">
+      <stop offset="0%" stop-color="#0284c7" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#38bdf8" stop-opacity="0.45"/>
+      <stop offset="75%" stop-color="#bae6fd" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0369a1" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="auroraGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="30"/>
+    </filter>
+  </defs>
+
+  <!-- Sky Base -->
+  <rect width="1920" height="1080" fill="url(#iceDarkSky)"/>
+
+  <!-- Aurora Borealis Curtains (Pure Arctic Cobalt & Frost Cyan) -->
+  <path d="M-100,280 C320,120 750,420 1150,220 C1550,40 1850,300 2050,180 L2050,650 C1850,720 1450,550 1150,680 C750,820 300,520 -100,640 Z" fill="url(#auroraCobalt)" filter="url(#auroraGlow)"/>
+  <path d="M-100,380 C350,200 800,500 1200,320 C1600,140 1880,400 2050,280 L2050,720 C1800,800 1420,620 1100,750 C700,900 320,600 -100,740 Z" fill="url(#auroraCyan)" filter="url(#auroraGlow)"/>
+
+  <!-- Distant Jagged Dark Ice Mountains -->
+  <polygon points="120,790 420,550 650,770 920,490 1240,780 1560,520 1850,770 2050,640 2050,1100 -50,1100" fill="#06182a" opacity="0.85"/>
+  <polygon points="120,790 420,550 520,780" fill="#38bdf8" fill-opacity="0.08"/>
+  <polygon points="650,770 920,490 1080,780" fill="#38bdf8" fill-opacity="0.12"/>
+  <polygon points="1240,780 1560,520 1720,780" fill="#38bdf8" fill-opacity="0.1"/>
+
+  <!-- Foreground Deep Ice Shelf Silhouettes -->
+  <polygon points="-50,910 280,700 580,930 480,1100 -50,1100" fill="#040e1a"/>
+  <polygon points="520,950 840,640 1150,960 1020,1100 520,1100" fill="#051220"/>
+  <polygon points="1080,940 1420,620 1780,940 1620,1100 1080,1100" fill="#040e1a"/>
+
+  <!-- Glowing Ice Ridge Highlights -->
+  <polyline points="-50,910 280,700 580,930" fill="none" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.45"/>
+  <polyline points="520,950 840,640 1150,960" fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-opacity="0.6"/>
+  <polyline points="1080,940 1420,620 1780,940" fill="none" stroke="#38bdf8" stroke-width="2" stroke-opacity="0.5"/>
+
+  <!-- Glowing Geometric Ice Crystal Outlines in Sky -->
+  <g stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.5" fill="none">
+    <polygon points="320,190 350,140 380,190 350,240"/>
+    <line x1="350" y1="140" x2="350" y2="240"/>
+    <polygon points="1620,230 1665,160 1710,230 1665,300"/>
+    <line x1="1665" y1="160" x2="1665" y2="300"/>
+  </g>
+
+  <!-- Luminous Polar Stars -->
+  <circle cx="210" cy="120" r="1.5" fill="#ffffff" opacity="0.85"/>
+  <circle cx="510" cy="180" r="2.5" fill="#bae6fd" opacity="0.9"/>
+  <circle cx="780" cy="90" r="2" fill="#ffffff" opacity="0.75"/>
+  <circle cx="1060" cy="140" r="3" fill="#e0f2fe" opacity="0.95"/>
+  <circle cx="1340" cy="110" r="1.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="1740" cy="150" r="2" fill="#bae6fd" opacity="0.9"/>
+</svg>

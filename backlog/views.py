@@ -1,17 +1,31 @@
+import json
+from datetime import datetime, time, timedelta
+
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .forms import SprintCreateForm, SprintEditForm, TaskCreateForm, TaskEditForm
 from django.db.models import Sum, Q, Case, When, Value, IntegerField
-from .models import Task, Tag, Sprint, SprintHistory, TaskHistory, SprintBoardPreference
-from .sprint_forms import WorkSessionForm
-from .sprint_services import work_time_unavailable_reason
-from .burndown import build_sprint_burndown
 from django.utils import timezone
 from django.urls import reverse
 
+from .forms import SprintCreateForm, SprintEditForm, TaskCreateForm, TaskEditForm
+from .models import (
+    Task,
+    Tag,
+    Sprint,
+    SprintHistory,
+    TaskHistory,
+    SprintBoardPreference,
+    TaskWorkSession,
+)
+from .sprint_forms import WorkSessionForm
+from .sprint_services import work_time_unavailable_reason, auto_update_sprint_statuses
+from .burndown import build_sprint_burndown
+
 
 def available_sprints(user):
+    auto_update_sprint_statuses()
     sprints = Sprint.objects.filter(is_deleted=False)
     if user.is_staff or user.is_superuser:
         return sprints
@@ -20,7 +34,7 @@ def available_sprints(user):
 
 @login_required
 def home(request):
-    return redirect("backlog:sprint_board")
+    return redirect("backlog:product_backlog")
 
 
 @login_required
@@ -39,6 +53,13 @@ def product_backlog(request, sprint_id=None):
     tasks = all_active_tasks.select_related('assignee', 'sprint').prefetch_related('tags')
 
     # Query params
+    sprint_status = request.GET.get('sprint_status', '').strip()
+    if sprint_status and not selected_sprint:
+        if sprint_status in ['stopped', 'cancelled']:
+            sprints = sprints.filter(status__in=['stopped', 'cancelled'])
+        else:
+            sprints = sprints.filter(status=sprint_status)
+
     search_query = request.GET.get('search', '').strip()
     selected_tags = request.GET.getlist('tag')
     selected_priority = request.GET.get('priority', '').strip()
@@ -115,8 +136,15 @@ def product_backlog(request, sprint_id=None):
             or request.user.pk in {sprint.product_owner_id, sprint.scrum_master_id}
             or any(member.pk == request.user.pk for member in sprint.team_members.all())
         )
-        sprint.can_drop = sprint.can_edit and sprint.status == 'active'
-        sprint.can_drag = sprint.can_edit and sprint.status != 'completed'
+        sprint.can_drop = sprint.can_edit and sprint.status not in ['stopped', 'cancelled', 'completed']
+        sprint.can_drag = sprint.can_edit and sprint.status not in ['stopped', 'cancelled', 'completed']
+
+    # Sprint counts for Sprint Board header
+    total_sprints_count = accessible_sprints.count()
+    active_sprints_count = accessible_sprints.filter(status='active').count()
+    not_started_sprints_count = accessible_sprints.filter(status='not_started').count()
+    completed_sprints_count = accessible_sprints.filter(status='completed').count()
+    stopped_sprints_count = accessible_sprints.filter(status__in=['stopped', 'cancelled']).count()
 
     context = {
         'tasks': tasks,
@@ -125,7 +153,99 @@ def product_backlog(request, sprint_id=None):
         'accessible_sprints': accessible_sprints,
         'selected_sprint': selected_sprint,
         'backlog_url': request.path,
-        'page_title': f'{selected_sprint.name} Backlog' if selected_sprint else 'Backlog Management',
+        'page_title': f'{selected_sprint.name} Backlog Management' if selected_sprint else 'Sprint Board',
+        'all_tags': all_tags,
+        'selected_tags': selected_tags,
+        'selected_priority': selected_priority,
+        'selected_type': selected_type,
+        'selected_status': selected_status,
+        'selected_sprint_status': sprint_status,
+        'search_query': search_query,
+        'sort_by': sort_by,
+        'total_items': total_items,
+        'total_points': total_points,
+        'story_count': story_count,
+        'bug_count': bug_count,
+        'total_sprints_count': total_sprints_count,
+        'active_sprints_count': active_sprints_count,
+        'not_started_sprints_count': not_started_sprints_count,
+        'completed_sprints_count': completed_sprints_count,
+        'stopped_sprints_count': stopped_sprints_count,
+    }
+
+    # Original US-03 return statement
+    return render(request, 'backlog/product_backlog.html', context)
+
+
+@login_required
+def product_backlog_only(request):
+    """
+    Standalone Product Backlog view.
+    Displays only product backlog tasks (tasks where sprint__isnull=True)
+    without any sprint backlog, sprint creation, or sprint recovery elements.
+    """
+    all_product_tasks = Task.objects.filter(is_deleted=False, sprint__isnull=True)
+    tasks = all_product_tasks.select_related('assignee').prefetch_related('tags')
+
+    search_query = request.GET.get('search', '').strip()
+    selected_tags = request.GET.getlist('tag')
+    selected_priority = request.GET.get('priority', '').strip()
+    selected_type = request.GET.get('type', '').strip()
+    selected_status = request.GET.get('status', '').strip()
+    sort_by = request.GET.get('sort', 'urgent_to_lowest').strip()
+
+    if search_query:
+        tasks = tasks.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(acceptance_criteria__icontains=search_query)
+        )
+
+    if selected_tags:
+        for tag_name in selected_tags:
+            if tag_name:
+                tasks = tasks.filter(tags__name=tag_name)
+
+    if selected_priority:
+        tasks = tasks.filter(priority=selected_priority)
+
+    if selected_type:
+        tasks = tasks.filter(item_type=selected_type)
+
+    if selected_status:
+        tasks = tasks.filter(status=selected_status)
+
+    priority_order = Case(
+        When(priority='urgent', then=Value(4)),
+        When(priority='important', then=Value(3)),
+        When(priority='medium', then=Value(2)),
+        When(priority='low', then=Value(1)),
+        default=Value(0),
+        output_field=IntegerField(),
+    )
+
+    if sort_by in ['priority_asc', 'lowest_to_urgent']:
+        tasks = tasks.annotate(p_val=priority_order).order_by('p_val', '-created_at')
+    elif sort_by in ['priority_desc', 'urgent_to_lowest']:
+        tasks = tasks.annotate(p_val=priority_order).order_by('-p_val', '-created_at')
+    elif sort_by in ['created_asc', 'oldest_to_recent']:
+        tasks = tasks.order_by('created_at')
+    elif sort_by in ['created_desc', 'recent_to_oldest']:
+        tasks = tasks.order_by('-created_at')
+    else:
+        tasks = tasks.annotate(p_val=priority_order).order_by('-p_val', '-created_at')
+
+    total_items = all_product_tasks.count()
+    total_points = all_product_tasks.aggregate(total=Sum('story_points'))['total'] or 0
+    story_count = all_product_tasks.filter(item_type='story').count()
+    bug_count = all_product_tasks.filter(item_type='bug').count()
+
+    all_tags = Tag.objects.all()
+
+    context = {
+        'tasks': tasks,
+        'backlog_url': request.path,
+        'page_title': 'Product Backlog',
         'all_tags': all_tags,
         'selected_tags': selected_tags,
         'selected_priority': selected_priority,
@@ -139,8 +259,7 @@ def product_backlog(request, sprint_id=None):
         'bug_count': bug_count,
     }
 
-    # Original US-03 return statement
-    return render(request, 'backlog/product_backlog.html', context)
+    return render(request, 'backlog/product_backlog_only.html', context)
 
 
 @login_required
@@ -200,7 +319,11 @@ def render_task_detail(request, task, *, time_form=None, edit_time_form=None,
                        editing_session=None, open_time_modal="", status=200):
     """Use the same detail page for initial display and recoverable form errors."""
     can_edit_task = True
-    if task.sprint and not (request.user.is_staff or request.user.is_superuser):
+    if task.status == 'completed':
+        can_edit_task = False
+    elif task.sprint and task.sprint.status in ['completed', 'stopped', 'cancelled']:
+        can_edit_task = False
+    elif task.sprint and not (request.user.is_staff or request.user.is_superuser):
         can_edit_task = task.sprint.team_members.filter(id=request.user.id).exists()
 
     return render(request, "backlog/task_detail.html", {
@@ -235,6 +358,13 @@ def delete_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id, is_deleted=False)
 
     if task.sprint is not None:
+        if task.sprint.status in ['completed', 'stopped', 'cancelled']:
+            status_display = 'cancelled' if task.sprint.status in ['stopped', 'cancelled'] else 'completed'
+            messages.error(
+                request,
+                f'"{task.title}" cannot be deleted because it belongs to a {status_display} sprint.'
+            )
+            return redirect("backlog:task_detail", task_id=task.id)
         messages.error(
             request,
             f'"{task.title}" cannot be deleted because it is currently assigned to a sprint. '
@@ -267,7 +397,7 @@ def delete_task(request, task_id):
                 f'Deleted Tasks recovery limit of 50 has been reached.',
             )
 
-            return redirect("backlog:product_backlog")
+            return redirect("backlog:product_backlog_only")
 
         # Normal soft delete while fewer than 50 recoverable tasks exist.
         task.is_deleted = True
@@ -287,7 +417,7 @@ def delete_task(request, task_id):
             f'"{task.title}" was deleted from the Product Backlog.',
         )
 
-        return redirect("backlog:product_backlog")
+        return redirect("backlog:product_backlog_only")
 
     return render(
         request,
@@ -307,6 +437,15 @@ def edit_task(request, task_id):
         pk=task_id,
         is_deleted=False
     )
+
+    if task.status == 'completed':
+        messages.error(request, "Completed tasks cannot be edited.")
+        return redirect("backlog:task_detail", task_id=task.id)
+
+    if task.sprint and task.sprint.status in ['completed', 'stopped', 'cancelled']:
+        status_display = 'cancelled' if task.sprint.status in ['stopped', 'cancelled'] else 'completed'
+        messages.error(request, f"Tasks in a {status_display} sprint cannot be edited.")
+        return redirect("backlog:task_detail", task_id=task.id)
 
     if task.sprint and not (request.user.is_staff or request.user.is_superuser or task.sprint.team_members.filter(id=request.user.id).exists()):
         messages.error(request, "You must be a team member of this sprint to edit its tasks.")
@@ -377,11 +516,27 @@ def update_task_status(request, task_id):
     """
     US: Update Task Status from backlog list view.
     """
+    task = get_object_or_404(Task, pk=task_id, is_deleted=False)
+    next_url = request.POST.get('next') or request.GET.get('next')
+
     if request.method == "POST":
-        task = get_object_or_404(Task, pk=task_id, is_deleted=False)
+        if task.status == 'completed':
+            messages.error(request, "A completed task cannot change its status.")
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            return redirect("backlog:product_backlog")
+
+        if task.sprint and task.sprint.status in ['completed', 'stopped', 'cancelled']:
+            status_display = 'cancelled' if task.sprint.status in ['stopped', 'cancelled'] else 'completed'
+            messages.error(request, f"Tasks in a {status_display} sprint cannot change their status.")
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
+            return redirect("backlog:product_backlog")
 
         if task.sprint and not (request.user.is_staff or request.user.is_superuser or task.sprint.team_members.filter(id=request.user.id).exists()):
             messages.error(request, "You must be a team member of this sprint to update its tasks.")
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
             return redirect("backlog:product_backlog")
         new_status = request.POST.get('status')
         if new_status in dict(Task.STATUS_CHOICES):
@@ -393,7 +548,14 @@ def update_task_status(request, task_id):
                 changed_by=request.user,
                 description=f"{request.user.get_full_name() or request.user.username} updated status to '{task.get_status_display()}'"
             )
-            
+
+    if next_url and next_url.startswith('/'):
+        return redirect(next_url)
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer and task.sprint_id and f'/sprints/{task.sprint_id}/backlog/' in referer:
+        return redirect('backlog:sprint_backlog', sprint_id=task.sprint_id)
+
     return redirect('backlog:product_backlog')
 
 @login_required
@@ -466,11 +628,22 @@ def edit_sprint(request, sprint_id):
 
     next_url = request.GET.get('next') or request.POST.get('next')
 
+    # AC: Completed or cancelled sprints cannot be changed anymore
+    if sprint.status in ["completed", "stopped", "cancelled"]:
+        status_display = "cancelled" if sprint.status in ["stopped", "cancelled"] else "completed"
+        messages.error(
+            request,
+            f"This sprint has been {status_display} and cannot be edited anymore.",
+        )
+        if next_url and next_url.startswith('/'):
+            return redirect(next_url)
+        return redirect("backlog:product_backlog")
+
     if request.method == "POST":
         form = SprintEditForm(request.POST, instance=sprint)
         if form.is_valid():
             changed_fields = form.changed_data
-            sprint = form.save()
+            sprint = form.save(user=request.user)
 
             if changed_fields:
                 for field in changed_fields:
@@ -514,6 +687,17 @@ def edit_sprint(request, sprint_id):
     else:
         form = SprintEditForm(instance=sprint)
 
+    sprint_tasks = list(
+        sprint.tasks.filter(is_deleted=False)
+        .select_related("assignee")
+        .values("id", "title", "assignee_id", "assignee__username", "assignee__first_name", "assignee__last_name")
+    )
+    for t in sprint_tasks:
+        first = t.get("assignee__first_name") or ""
+        last = t.get("assignee__last_name") or ""
+        full = f"{first} {last}".strip()
+        t["assignee_name"] = full or t.get("assignee__username") or "Unassigned"
+
     return render(
         request,
         "backlog/edit_sprint.html",
@@ -521,6 +705,7 @@ def edit_sprint(request, sprint_id):
             "form": form,
             "sprint": sprint,
             "next_url": next_url,
+            "sprint_tasks_json": json.dumps(sprint_tasks),
         },
     )
 
@@ -565,6 +750,7 @@ def sprint_detail(request, sprint_id):
     AC 7: Sprint task information includes name, type, tags, priority, story points, assignee, accumulated hours.
     AC 8: Admin can view sprint information without being a sprint member.
     """
+    auto_update_sprint_statuses()
     sprint = get_object_or_404(
         Sprint.objects.prefetch_related(
             "team_members",
@@ -681,6 +867,10 @@ def assign_sprint_role(request, sprint_id, role):
     User = get_user_model()
     if request.method == "POST":
         sprint = get_object_or_404(Sprint, pk=sprint_id)
+        if sprint.status in ['completed', 'stopped', 'cancelled']:
+            status_display = 'cancelled' if sprint.status in ['stopped', 'cancelled'] else 'completed'
+            messages.error(request, f"Roles cannot be assigned in a {status_display} sprint.")
+            return redirect('backlog:product_backlog')
         user_id = request.POST.get('user_id')
         if not user_id:
             messages.error(request, "Please select a user.")
@@ -807,10 +997,11 @@ def recover_task(request, task_id):
     try:
         task = Task.objects.get(pk=task_id, is_deleted=True)
 
-        if task.sprint and task.sprint.status == "completed":
+        if task.sprint and task.sprint.status in ["completed", "stopped", "cancelled"]:
+            status_display = "cancelled" if task.sprint.status in ["stopped", "cancelled"] else "completed"
             messages.error(
                 request,
-                "Tasks from completed sprints cannot be recovered."
+                f"Tasks from {status_display} sprints cannot be recovered."
             )
             return redirect("backlog:deleted_tasks")
 
@@ -910,8 +1101,12 @@ def delete_sprint(request, sprint_id):
         messages.error(request, "Sprint was not found.")
         return redirect("backlog:product_backlog")
 
-    if sprint.status not in ["stopped", "not_started"]:
-        messages.error(request, "Only stopped or not-started sprints can be deleted.")
+    if sprint.status == "active":
+        messages.error(request, "Active sprints cannot be deleted directly. Please cancel the sprint first.")
+        return redirect("backlog:sprint_detail", sprint_id=sprint_id)
+
+    if sprint.status not in ["stopped", "cancelled", "not_started", "completed"]:
+        messages.error(request, "Only cancelled, completed, or not-started sprints can be deleted.")
         return redirect("backlog:product_backlog")
 
     if request.method == "POST":
@@ -924,4 +1119,246 @@ def delete_sprint(request, sprint_id):
         request,
         "backlog/delete_sprint.html",
         {"sprint": sprint},
+    )
+
+def _dashboard_date_range(request):
+    """
+    Parse the dashboard start and end dates.
+
+    If no dates are supplied, today's date is used.
+    If the start date is after the end date, the dates are swapped.
+    """
+    today = timezone.localdate()
+
+    start_date_text = request.GET.get("start_date", "").strip()
+    end_date_text = request.GET.get("end_date", "").strip()
+
+    try:
+        start_date = (
+            datetime.strptime(start_date_text, "%Y-%m-%d").date()
+            if start_date_text
+            else today
+        )
+    except ValueError:
+        start_date = today
+
+    try:
+        end_date = (
+            datetime.strptime(end_date_text, "%Y-%m-%d").date()
+            if end_date_text
+            else today
+        )
+    except ValueError:
+        end_date = today
+
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
+
+    current_timezone = timezone.get_current_timezone()
+
+    range_start = timezone.make_aware(
+        datetime.combine(start_date, time.min),
+        current_timezone,
+    )
+
+    range_end = timezone.make_aware(
+        datetime.combine(
+            end_date + timedelta(days=1),
+            time.min,
+        ),
+        current_timezone,
+    )
+
+    day_count = (end_date - start_date).days + 1
+
+    return start_date, end_date, range_start, range_end, day_count
+
+
+def _session_seconds_in_range(session, range_start, range_end):
+    """
+    Return only the portion of a work session that falls inside
+    the selected dashboard date range.
+    """
+    overlap_start = max(session.started_at, range_start)
+    overlap_end = min(session.ended_at, range_end)
+
+    if overlap_end <= overlap_start:
+        return 0
+
+    return (overlap_end - overlap_start).total_seconds()
+
+
+@login_required
+def admin_dashboard(request):
+    """
+    US-24: View Admin Dashboard.
+    US-26: Sort Dashboard Team Members.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.error(
+            request,
+            "Access denied: You do not have permission to view the admin dashboard.",
+        )
+        return redirect("backlog:product_backlog")
+
+    (
+        start_date,
+        end_date,
+        range_start,
+        range_end,
+        day_count,
+    ) = _dashboard_date_range(request)
+
+    User = get_user_model()
+
+    team_members = User.objects.filter(
+        is_active=True,
+        is_staff=False,
+        is_superuser=False,
+    ).order_by(
+        "first_name",
+        "last_name",
+        "username",
+    )
+
+    members = []
+
+    for member in team_members:
+        sessions = TaskWorkSession.objects.filter(
+            user=member,
+            started_at__lt=range_end,
+            ended_at__gt=range_start,
+        )
+
+        total_seconds = sum(
+            _session_seconds_in_range(
+                session,
+                range_start,
+                range_end,
+            )
+            for session in sessions
+        )
+
+        average_seconds = total_seconds / day_count
+
+        members.append(
+            {
+                "user": member,
+                "total_seconds": total_seconds,
+                "average_seconds": average_seconds,
+                "total_hours": round(total_seconds / 3600, 2),
+                "average_hours": round(average_seconds / 3600, 2),
+            }
+        )
+
+    sort_order = request.GET.get("sort", "").strip()
+
+    if sort_order == "low_to_high":
+        members.sort(
+            key=lambda member: member["average_seconds"]
+        )
+
+    elif sort_order == "high_to_low":
+        members.sort(
+            key=lambda member: member["average_seconds"],
+            reverse=True,
+        )
+
+    context = {
+        "members": members,
+        "start_date": start_date,
+        "end_date": end_date,
+        "day_count": day_count,
+        "sort_order": sort_order,
+    }
+
+    return render(
+        request,
+        "backlog/admin_dashboard.html",
+        context,
+    )
+
+
+@login_required
+def dashboard_member_detail(request, user_id):
+    """
+    US-24 AC8:
+    Allow the admin to view time information for one team member.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.error(
+            request,
+            "Access denied: You do not have permission to view dashboard details.",
+        )
+        return redirect("backlog:product_backlog")
+
+    (
+        start_date,
+        end_date,
+        range_start,
+        range_end,
+        day_count,
+    ) = _dashboard_date_range(request)
+
+    User = get_user_model()
+
+    member = get_object_or_404(
+        User,
+        pk=user_id,
+        is_active=True,
+        is_staff=False,
+        is_superuser=False,
+    )
+
+    sessions = (
+        TaskWorkSession.objects.filter(
+            user=member,
+            started_at__lt=range_end,
+            ended_at__gt=range_start,
+        )
+        .select_related(
+            "task",
+            "task__sprint",
+        )
+        .order_by("-started_at")
+    )
+
+    session_rows = []
+    total_seconds = 0
+
+    for session in sessions:
+        duration_seconds = _session_seconds_in_range(
+            session,
+            range_start,
+            range_end,
+        )
+
+        total_seconds += duration_seconds
+
+        session_rows.append(
+            {
+                "session": session,
+                "duration_seconds": duration_seconds,
+                "duration_hours": round(duration_seconds / 3600, 2),
+            }
+        )
+
+    average_seconds = total_seconds / day_count
+
+    context = {
+        "member": member,
+        "sessions": session_rows,
+        "start_date": start_date,
+        "end_date": end_date,
+        "day_count": day_count,
+        "total_seconds": total_seconds,
+        "average_seconds": average_seconds,
+        "total_hours": round(total_seconds / 3600, 2),
+        "average_hours": round(average_seconds / 3600, 2),
+    }
+
+    return render(
+        request,
+        "backlog/dashboard_member_detail.html",
+        context,
     )

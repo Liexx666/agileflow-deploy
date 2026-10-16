@@ -4,12 +4,19 @@
 
 {% block content %}
 <div class="container create-task-page px-4">
-    <a href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('edit_sprint_referer_{{ sprint.id }}') || '{% url 'backlog:sprint_detail' sprint.id %}';" class="back-link">
+    <a href="{% url 'backlog:sprint_detail' sprint.id %}" id="editSprintBackLink" class="back-link">
         ← Back
     </a>
 
-    <h1 class="create-title mt-2">Edit sprint</h1>
-    <p class="text-muted">Update {{ sprint.name }} and its team details.</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-2 mb-3">
+        <div>
+            <h1 class="create-title mb-1">Edit sprint</h1>
+            <p class="text-muted mb-0">Update {{ sprint.name }} and its team details.</p>
+        </div>
+        <a href="{% url 'backlog:sprint_backlog' sprint.id %}" class="btn btn-outline-primary d-inline-flex align-items-center gap-2 shadow-sm" id="manageSprintTopBtn">
+            <i class="bi bi-kanban"></i> Manage Sprint
+        </a>
+    </div>
 
     <form method="post" class="task-form-card shadow-sm" action="{% if next_url %}?next={{ next_url|urlencode }}{% endif %}" novalidate>
         {% csrf_token %}
@@ -20,6 +27,13 @@
         {% if form.non_field_errors %}
         <div class="alert alert-danger m-4">
             {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        {% if sprint.status in 'active stopped cancelled completed' %}
+        <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>This sprint has already started. Start date and end date can only be changed before the sprint starts.</span>
         </div>
         {% endif %}
 
@@ -35,6 +49,10 @@
                     </legend>
                     <div class="tag-checkboxes">{{ field }}</div>
 
+                    {% if field.help_text %}
+                    <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
+                    {% endif %}
+
                     {% for error in field.errors %}
                     <div class="invalid-feedback d-block">{{ error }}</div>
                     {% endfor %}
@@ -47,6 +65,10 @@
                     </label>
                     {{ field }}
 
+                    {% if field.help_text %}
+                    <small class="form-text text-muted d-block mt-1">{{ field.help_text }}</small>
+                    {% endif %}
+
                     {% for error in field.errors %}
                     <div class="invalid-feedback d-block">{{ error }}</div>
                     {% endfor %}
@@ -56,22 +78,200 @@
         </section>
 
         <div class="form-actions">
-            <a class="btn btn-outline-secondary"
-               href="javascript:void(0);" onclick="window.location.href = sessionStorage.getItem('edit_sprint_referer_{{ sprint.id }}') || '{% url 'backlog:sprint_detail' sprint.id %}';">
+            <a class="btn btn-outline-secondary" id="editSprintCancelLink"
+               href="{% url 'backlog:sprint_detail' sprint.id %}">
                 Cancel
             </a>
-            <button type="submit" class="btn btn-create-submit">
+            <button type="submit" class="btn btn-create-submit" id="btnEditSprintSubmit">
                 Save changes
             </button>
         </div>
     </form>
 </div>
+
+<!-- Modal: Reassign Sprint Tasks When Team Members Removed -->
+<div class="modal fade" id="modalReassignSprintTasks" tabindex="-1" aria-labelledby="modalReassignSprintTasksLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="background: var(--theme-card-bg); border-radius: 18px;">
+            <div class="modal-header border-bottom" style="border-color: var(--theme-card-border) !important;">
+                <h5 class="modal-title fw-bold text-primary" id="modalReassignSprintTasksLabel">
+                    <i class="bi bi-arrow-left-right me-2"></i>Reassign Sprint Tasks
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-3 rounded-3" style="font-size: 0.88rem;">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0 fs-5 text-warning"></i>
+                    <div>
+                        One or more team members being removed from this sprint have active tasks assigned to them. 
+                        Please reassign their sprint tasks to one of the remaining sprint members.
+                    </div>
+                </div>
+                <label class="form-label fw-bold small text-uppercase tracking-wider reassign-section-label mb-2" style="color: var(--theme-text-headings, #ffffff) !important;">Sprint Tasks Requiring Reassignment</label>
+                <div id="sprintTasksReassignContainer" class="d-flex flex-column gap-3">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer border-top" style="border-color: var(--theme-card-border) !important;">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary fw-semibold rounded-pill px-4" id="btnConfirmSprintTasksReassignment">
+                    Confirm & Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block extra_js %}
 <script>
     var ref = document.referrer;
     if (ref && !ref.includes('/edit') && !ref.includes('/new') && !ref.includes('/time') && !ref.includes('/assign/')) {
         sessionStorage.setItem('edit_sprint_referer_{{ sprint.id }}', ref);
     }
+    var savedReferer = sessionStorage.getItem('edit_sprint_referer_{{ sprint.id }}');
+    if (savedReferer) {
+        var backLink = document.getElementById('editSprintBackLink');
+        var cancelLink = document.getElementById('editSprintCancelLink');
+        if (backLink) {
+            backLink.href = savedReferer;
+        }
+        if (cancelLink) {
+            cancelLink.href = savedReferer;
+        }
+    }
+
+    // Task Reassignment on Team Member Removal in Edit Sprint
+    (function () {
+        const form = document.querySelector(".task-form-card");
+        if (!form) return;
+
+        let sprintTasks = [];
+        try {
+            sprintTasks = JSON.parse('{{ sprint_tasks_json|default:"[]"|escapejs }}');
+        } catch (e) {
+            console.error("Could not parse sprint tasks:", e);
+        }
+
+        // Capture initially checked team members
+        const initialMemberInputs = Array.from(document.querySelectorAll('input[name="team_members"]:checked'));
+        const initialMemberIds = initialMemberInputs.map(el => String(el.value));
+
+        let confirmedReassignment = false;
+
+        form.addEventListener("submit", function (e) {
+            if (confirmedReassignment) return;
+
+            const currentMemberInputs = Array.from(document.querySelectorAll('input[name="team_members"]:checked'));
+            const currentMemberIds = currentMemberInputs.map(el => String(el.value));
+
+            // Find members who were unchecked
+            const removedMemberIds = initialMemberIds.filter(id => !currentMemberIds.includes(id));
+            if (removedMemberIds.length === 0) return;
+
+            // Find tasks assigned to removed members
+            const tasksNeedingReassignment = sprintTasks.filter(t => t.assignee_id && removedMemberIds.includes(String(t.assignee_id)));
+            if (tasksNeedingReassignment.length === 0) return;
+
+            // There are tasks needing reassignment. Prevent immediate submit.
+            e.preventDefault();
+
+            // Find remaining members in the sprint
+            const remainingMembers = currentMemberInputs.map(el => {
+                let name = "";
+                const label = el.closest("label") || document.querySelector(`label[for="${el.id}"]`);
+                if (label) name = label.textContent.trim();
+                if (!name && el.parentElement) name = el.parentElement.textContent.trim();
+                return {
+                    id: el.value,
+                    name: name || `Member #${el.value}`,
+                };
+            });
+
+            if (remainingMembers.length === 0) {
+                alert("Cannot remove all team members from the sprint while tasks are still assigned. Please keep at least one team member in the sprint.");
+                return;
+            }
+
+            const container = document.getElementById("sprintTasksReassignContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            tasksNeedingReassignment.forEach((t, idx) => {
+                const itemDiv = document.createElement("div");
+                itemDiv.className = "p-3 border rounded-3 d-flex flex-column gap-2 shadow-sm reassign-task-card";
+                itemDiv.style.background = "var(--theme-surface-glass, rgba(30, 18, 40, 0.85))";
+                itemDiv.style.borderColor = "var(--theme-card-border, rgba(244, 114, 182, 0.25))";
+
+                let optionsHtml = `<option value="" disabled selected>-- Select a remaining sprint member --</option>`;
+                remainingMembers.forEach(m => {
+                    optionsHtml += `<option value="${m.id}">${m.name}</option>`;
+                });
+
+                itemDiv.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-truncate me-2 reassign-task-title" style="color: var(--theme-text-headings, #ffffff); max-width: 65%; font-size: 0.95rem; font-weight: 700;" title="Task ${t.id}: ${t.title}">
+                            <i class="bi bi-check-circle text-primary me-1"></i>Task ${t.id}: ${t.title}
+                        </span>
+                        <span class="badge rounded-pill px-2 py-1" style="background: rgba(148, 163, 184, 0.2); color: var(--theme-text-headings, #ffffff); border: 1px solid rgba(148, 163, 184, 0.35);">
+                            Was: ${t.assignee_name}
+                        </span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mt-1">
+                        <label class="small mb-0 text-nowrap reassign-to-label" style="color: var(--theme-text-main, #fdf4ff); font-weight: 600;">Reassign to:</label>
+                        <select class="form-select form-select-sm sprint-task-reassign-select w-100" data-task-id="${t.id}" required style="background-color: var(--theme-input-bg, #1e1228); color: var(--theme-text-headings, #ffffff); border-color: var(--theme-input-border, rgba(244, 114, 182, 0.3));">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            const modalEl = document.getElementById("modalReassignSprintTasks");
+            if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            } else {
+                modalEl.style.display = "block";
+                modalEl.classList.add("show");
+            }
+
+            const btnConfirm = document.getElementById("btnConfirmSprintTasksReassignment");
+            if (btnConfirm) {
+                btnConfirm.onclick = function () {
+                    const selects = container.querySelectorAll(".sprint-task-reassign-select");
+                    for (let s of selects) {
+                        if (!s.value) {
+                            alert("Please select a new assignee for all tasks.");
+                            s.focus();
+                            return;
+                        }
+                    }
+
+                    // Remove any old reassign hidden inputs
+                    form.querySelectorAll('input[name^="reassign_task_"]').forEach(el => el.remove());
+
+                    // Append new hidden inputs
+                    selects.forEach(s => {
+                        const taskId = s.getAttribute("data-task-id");
+                        const hidden = document.createElement("input");
+                        hidden.type = "hidden";
+                        hidden.name = `reassign_task_${taskId}`;
+                        hidden.value = s.value;
+                        form.appendChild(hidden);
+                    });
+
+                    confirmedReassignment = true;
+                    if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    } else {
+                        modalEl.style.display = "none";
+                    }
+                    form.submit();
+                };
+            }
+        });
+    })();
 </script>
-{% endblock %}
 {% endblock %}

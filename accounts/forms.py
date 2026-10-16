@@ -4,14 +4,18 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from .models import AccountSecurity
+
+
 
 class EmailLoginForm(forms.Form):
-    email = forms.EmailField(
-        label="Email",
-        widget=forms.EmailInput(
+    email = forms.CharField(
+        label="Email or Username",
+        widget=forms.TextInput(
             attrs={
                 "class": "form-control",
                 "autocomplete": "username",
+                "placeholder": "Enter your email or username",
             }
         ),
     )
@@ -23,10 +27,11 @@ class EmailLoginForm(forms.Form):
             attrs={
                 "class": "form-control",
                 "autocomplete": "current-password",
+                "placeholder": "Enter your password",
             }
         ),
     )
-    
+
     def __init__(self, request=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
@@ -34,25 +39,32 @@ class EmailLoginForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get("email")
+        identifier = cleaned_data.get("email")
         password = cleaned_data.get("password")
 
-        if not email or not password:
+        if not identifier or not password:
             return cleaned_data
 
+        identifier = identifier.strip()
         User = get_user_model()
 
-        try:
-            account = User.objects.get(email__iexact=email)
-        except (User.DoesNotExist, User.MultipleObjectsReturned):
-            # Perform password hashing even when no unique account matches.
-            User().set_password(password)
-        else:
+        # Query database for matching user by email or by username
+        account = (
+            User.objects.filter(email__iexact=identifier).first()
+            or User.objects.filter(username__iexact=identifier).first()
+        )
+
+        if account:
+            # Check credentials against stored database password hash
             self.user = authenticate(
                 request=self.request,
                 username=account.get_username(),
                 password=password,
             )
+        else:
+            # Constant-time dummy check to prevent timing attacks
+            User().set_password(password)
+            self.user = None
 
         if self.user is None:
             raise forms.ValidationError("Invalid email or password.")
@@ -165,6 +177,7 @@ class AdminRegisterAccountForm(forms.Form):
             is_superuser=is_superuser,
             is_active=is_active,
         )
+        AccountSecurity.objects.update_or_create(user=user, defaults={"must_change_password": True})
 
         return user
 

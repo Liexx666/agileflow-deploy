@@ -14,7 +14,7 @@
     <div class="account-page-header">
         <div>
             <p class="account-eyebrow mb-1">
-                US-27 · Administration
+                Administration
             </p>
 
             <h1 class="account-title mb-2">
@@ -30,6 +30,11 @@
            class="btn btn-primary account-primary-action">
             <i class="bi bi-person-plus me-2"></i>
             Register new account
+        </a>
+        <a href="{% url 'accounts:admin_dashboard' %}"
+           class="btn btn-outline-primary account-primary-action">
+            <i class="bi bi-bar-chart me-2"></i>
+            Team Member Summary
         </a>
     </div>
 
@@ -90,8 +95,18 @@
                                         {{ account.get_full_name|default:account.username }}
                                     </div>
 
-                                    <div class="account-username">
-                                        @{{ account.username }}
+                                    <div class="account-username d-flex align-items-center gap-2">
+                                        <span>@{{ account.username }}</span>
+                                        {% if account.assigned_tasks_count > 0 %}
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fs-8 px-2 py-0" title="{{ account.assigned_tasks_count }} assigned task{{ account.assigned_tasks_count|pluralize }} in database ({{ account.active_tasks_count }} active, {{ account.completed_tasks_count }} completed)">
+                                                <i class="bi bi-list-task me-1"></i>{{ account.assigned_tasks_count }} task{{ account.assigned_tasks_count|pluralize }}
+                                                {% if account.completed_tasks_count > 0 and account.active_tasks_count > 0 %}
+                                                    <span class="opacity-75 ms-1">({{ account.active_tasks_count }} active, {{ account.completed_tasks_count }} completed)</span>
+                                                {% elif account.completed_tasks_count > 0 and account.active_tasks_count == 0 %}
+                                                    <span class="opacity-75 ms-1">(all completed)</span>
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -136,20 +151,39 @@
 
                         <td class="text-end">
                             {% if account.id != user.id %}
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1"
-                                data-bs-toggle="modal"
-                                data-bs-target="#resetPasswordConfirmModal"
-                                data-user-id="{{ account.id }}"
-                                data-username="{{ account.username }}"
-                                data-user-name="{{ account.get_full_name|default:account.username }}"
-                                aria-label="Reset password for {{ account.username }}">
-                                <i class="bi bi-key"></i>
-                                Reset password
-                            </button>
-                            {% endif %}
-                        </td>
+                                <div class="d-inline-flex align-items-center gap-2">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#resetPasswordConfirmModal"
+                                        data-user-id="{{ account.id }}"
+                                        data-username="{{ account.username }}"
+                                        data-user-name="{{ account.get_full_name|default:account.username }}"
+                                        aria-label="Reset password for {{ account.username }}">
+                                        <i class="bi bi-key"></i>
+                                        Reset password
+                                    </button>
+
+                                     <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#removeMemberConfirmModal"
+                                        data-user-id="{{ account.id }}"
+                                        data-username="{{ account.username }}"
+                                        data-user-name="{{ account.get_full_name|default:account.username }}"
+                                        data-tasks-count="{{ account.assigned_tasks_count|default:0 }}"
+                                        data-active-tasks-count="{{ account.active_tasks_count|default:0 }}"
+                                        aria-label="Remove {{ account.username }}">
+                                        <i class="bi bi-person-x"></i>
+                                        Remove
+                                    </button>
+
+                               </div>
+                                {% endif %}
+                            </td>
                     </tr>
 
                     {% empty %}
@@ -179,10 +213,10 @@
 
     <!-- Confirmation Modal for Admin Resetting User Password -->
     <div class="modal fade" id="resetPasswordConfirmModal" tabindex="-1" aria-labelledby="resetPasswordConfirmModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered account-modal-dialog">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom-0 pb-0">
-                    <h5 class="modal-title fw-bold text-dark d-flex align-items-center gap-2" id="resetPasswordConfirmModalLabel">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="resetPasswordConfirmModalLabel">
                         <i class="bi bi-shield-lock text-danger fs-4"></i>
                         Reset User Password
                     </h5>
@@ -191,12 +225,12 @@
                 <form method="post" id="adminResetPasswordForm" action="">
                     {% csrf_token %}
                     <div class="modal-body py-3">
-                        <p class="mb-3 text-secondary">
-                            Are you sure you want to reset the password for <strong id="resetTargetName" class="text-dark"></strong> (<span id="resetTargetUsername" class="text-muted"></span>)?
+                        <p class="mb-3 modal-target-question">
+                            Are you sure you want to reset the password for <strong id="resetTargetName" class="modal-target-name"></strong> (<span id="resetTargetUsername" class="modal-target-username"></span>)?
                         </p>
-                        <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-0">
-                            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
-                            <div>
+                        <div class="reassign-alert-banner d-flex align-items-center gap-2 py-2 px-3 mb-0">
+                            <i class="bi bi-exclamation-triangle-fill alert-icon fs-5"></i>
+                            <div class="alert-body-text">
                                 The password will be changed to the default: <code class="fw-bold fs-6">password123</code>
                             </div>
                         </div>
@@ -209,7 +243,434 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation Modal for Removing User Account -->
+    <div class="modal fade" id="removeMemberConfirmModal" tabindex="-1" aria-labelledby="removeMemberConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg account-modal-dialog">
+            <div class="modal-content border-0 shadow">
+
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2"
+                        id="removeMemberConfirmModalLabel">
+                        <i class="bi bi-person-x text-danger fs-4"></i>
+                        Remove User Account
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                </div>
+
+                <form method="post" id="removeMemberForm" action="">
+                    {% csrf_token %}
+
+                    <div class="modal-body py-3">
+                        <p class="mb-3 modal-target-question">
+                            Are you sure you want to remove
+                            <strong id="removeTargetName" class="modal-target-name"></strong>
+                            (<span id="removeTargetUsername" class="modal-target-username"></span>)?
+                        </p>
+
+                        <!-- When user has 0 assigned tasks in database -->
+                        <div id="removeTasksAllowedNotice" class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-0">
+                            <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+                            <div>
+                                This account has 0 assigned tasks in the database and will be permanently removed. The user will no longer be able to log in to AgileFlow.
+                            </div>
+                        </div>
+
+                        <!-- When user has assigned tasks in database -->
+                        <div id="removeTasksReassignSection" class="d-none">
+                            <div class="reassign-alert-banner d-flex align-items-start gap-3 py-3 px-3 mb-3 shadow-sm">
+                                <i class="bi bi-exclamation-triangle-fill alert-icon fs-3 flex-shrink-0 mt-1"></i>
+                                <div class="w-100">
+                                    <div class="alert-heading-text fs-6 mb-1">
+                                        Reassign Tasks Before Account Removal
+                                    </div>
+                                    <div class="alert-body-text small mb-1" id="reassignSummaryText">
+                                        This account currently has <strong id="reassignTotalTasksCount">0</strong> assigned task(s) in the database (<strong id="reassignActiveTasksCount">0</strong> active, <strong id="reassignCompletedTasksCount">0</strong> completed).
+                                        <span id="reassignActionPrompt">Select a new assignee for every active task below before this account can be removed.</span>
+                                    </div>
+                                    <div class="alert-subnote small pt-2 border-top border-warning-subtle" id="reassignCompletedSubnote">
+                                        <i class="bi bi-lock-fill me-1"></i>Completed tasks do not need to be reassigned and remain locked in the database under AgileFlow rules.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border rounded-3 p-3 reassign-tasks-container" style="max-height: 340px; overflow-y: auto;">
+                                <div id="removeTasksReassignList" class="d-flex flex-column gap-3">
+                                    <!-- Rendered dynamically by JavaScript from database tasks -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fallback block notice if any task has no eligible members to reassign to -->
+                        <div id="removeTasksBlockedNotice" class="alert alert-danger d-flex align-items-start gap-2 py-2 px-3 mt-3 mb-0 d-none">
+                            <i class="bi bi-slash-circle-fill text-danger fs-5 flex-shrink-0 mt-1"></i>
+                            <div>
+                                <strong>Cannot remove account yet:</strong>
+                                <span>One or more sprint tasks cannot be reassigned because there are no other eligible members working on the sprint. Please add members to the sprint or move the tasks back to the Product Backlog first.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button"
+                                class="btn btn-light px-3"
+                                data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                id="confirmRemoveBtn"
+                                class="btn btn-danger px-4 fw-semibold btn-reassign-bright">
+                            Confirm Remove
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<style>
+/* High-Contrast Modal Typography & Theming */
+.account-modal-dialog .modal-content {
+    background-color: var(--theme-card-bg, #1e1228) !important;
+    border: 1px solid var(--theme-card-border, rgba(244, 114, 182, 0.25)) !important;
+    color: var(--theme-text-main, #fdf4ff) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+.account-modal-dialog .modal-header {
+    border-bottom: 1px solid var(--theme-card-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+.account-modal-dialog .modal-title {
+    color: var(--theme-text-headings, #ffffff) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
+}
+
+.account-modal-dialog .modal-target-question {
+    color: var(--theme-text-main, #fdf4ff) !important;
+    font-size: 0.98rem;
+    line-height: 1.5;
+}
+
+.account-modal-dialog .modal-target-name {
+    color: var(--theme-text-headings, #ffffff) !important;
+    font-weight: 700;
+}
+
+.account-modal-dialog .modal-target-username {
+    color: var(--theme-text-muted, #94a3b8) !important;
+}
+
+/* Reassign Warning Box (Theme-Adaptive & High Contrast) */
+.reassign-alert-banner {
+    border-radius: 12px !important;
+    padding: 1rem 1.15rem !important;
+    transition: all 0.2s ease;
+}
+
+body[data-mode="dark"] .reassign-alert-banner,
+[data-mode="dark"] .reassign-alert-banner {
+    background: rgba(245, 158, 11, 0.14) !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+    color: #fef3c7 !important;
+}
+
+body[data-mode="dark"] .reassign-alert-banner .alert-heading-text,
+[data-mode="dark"] .reassign-alert-banner .alert-heading-text {
+    color: #fbbf24 !important;
+    font-weight: 700 !important;
+}
+
+body[data-mode="dark"] .reassign-alert-banner .alert-body-text,
+[data-mode="dark"] .reassign-alert-banner .alert-body-text {
+    color: #fef08a !important;
+}
+
+body[data-mode="dark"] .reassign-alert-banner .alert-subnote,
+[data-mode="dark"] .reassign-alert-banner .alert-subnote {
+    color: #fde047 !important;
+    opacity: 0.9;
+}
+
+body[data-mode="dark"] .reassign-alert-banner .alert-icon,
+[data-mode="dark"] .reassign-alert-banner .alert-icon {
+    color: #f59e0b !important;
+}
+
+body[data-mode="light"] .reassign-alert-banner,
+[data-mode="light"] .reassign-alert-banner {
+    background: #fffbeb !important;
+    border: 1px solid #fcd34d !important;
+    color: #78350f !important;
+}
+
+body[data-mode="light"] .reassign-alert-banner .alert-heading-text,
+[data-mode="light"] .reassign-alert-banner .alert-heading-text {
+    color: #92400e !important;
+    font-weight: 700 !important;
+}
+
+body[data-mode="light"] .reassign-alert-banner .alert-body-text,
+[data-mode="light"] .reassign-alert-banner .alert-body-text {
+    color: #78350f !important;
+}
+
+body[data-mode="light"] .reassign-alert-banner .alert-subnote,
+[data-mode="light"] .reassign-alert-banner .alert-subnote {
+    color: #92400e !important;
+}
+
+body[data-mode="light"] .reassign-alert-banner .alert-icon,
+[data-mode="light"] .reassign-alert-banner .alert-icon {
+    color: #d97706 !important;
+}
+
+/* Task Container Backdrop */
+body[data-mode="dark"] .reassign-tasks-container,
+[data-mode="dark"] .reassign-tasks-container {
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body[data-mode="light"] .reassign-tasks-container,
+[data-mode="light"] .reassign-tasks-container {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Task Cards inside Reassign Container */
+.reassign-task-card {
+    border-radius: 12px !important;
+    transition: all 0.2s ease-in-out;
+}
+
+body[data-mode="dark"] .reassign-task-card,
+[data-mode="dark"] .reassign-task-card {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+body[data-mode="light"] .reassign-task-card,
+[data-mode="light"] .reassign-task-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Task Title Font */
+.reassign-task-title {
+    font-size: 0.98rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
+}
+
+body[data-mode="dark"] .reassign-task-title,
+[data-mode="dark"] .reassign-task-title {
+    color: #ffffff !important;
+}
+
+body[data-mode="light"] .reassign-task-title,
+[data-mode="light"] .reassign-task-title {
+    color: #0f172a !important;
+}
+
+/* Reassign Label & Hint */
+.reassign-label-wrap {
+    font-size: 0.86rem !important;
+    font-weight: 600 !important;
+}
+
+body[data-mode="dark"] .reassign-label-wrap,
+[data-mode="dark"] .reassign-label-wrap {
+    color: #e2e8f0 !important;
+}
+
+body[data-mode="light"] .reassign-label-wrap,
+[data-mode="light"] .reassign-label-wrap {
+    color: #334155 !important;
+}
+
+.reassign-rule-hint {
+    font-size: 0.76rem !important;
+    font-style: italic !important;
+    font-weight: 400 !important;
+}
+
+body[data-mode="dark"] .reassign-rule-hint,
+[data-mode="dark"] .reassign-rule-hint {
+    color: #fca5a5 !important;
+}
+
+body[data-mode="light"] .reassign-rule-hint,
+[data-mode="light"] .reassign-rule-hint {
+    color: #dc2626 !important;
+}
+
+/* Task Location Badges */
+body[data-mode="dark"] .badge-reassign-sprint,
+[data-mode="dark"] .badge-reassign-sprint {
+    background: rgba(59, 130, 246, 0.22) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.4) !important;
+}
+
+body[data-mode="light"] .badge-reassign-sprint,
+[data-mode="light"] .badge-reassign-sprint {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+body[data-mode="dark"] .badge-reassign-backlog,
+[data-mode="dark"] .badge-reassign-backlog {
+    background: rgba(148, 163, 184, 0.2) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+body[data-mode="light"] .badge-reassign-backlog,
+[data-mode="light"] .badge-reassign-backlog {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+/* Status Badges */
+body[data-mode="dark"] .badge-reassign-active,
+[data-mode="dark"] .badge-reassign-active {
+    background: rgba(59, 130, 246, 0.22) !important;
+    color: #93c5fd !important;
+    border: 1px solid rgba(96, 165, 250, 0.45) !important;
+}
+
+body[data-mode="light"] .badge-reassign-active,
+[data-mode="light"] .badge-reassign-active {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+body[data-mode="dark"] .badge-reassign-completed,
+[data-mode="dark"] .badge-reassign-completed {
+    background: rgba(34, 197, 94, 0.2) !important;
+    color: #86efac !important;
+    border: 1px solid rgba(34, 197, 94, 0.4) !important;
+}
+
+body[data-mode="light"] .badge-reassign-completed,
+[data-mode="light"] .badge-reassign-completed {
+    background: #f0fdf4 !important;
+    color: #15803d !important;
+    border: 1px solid #bbf7d0 !important;
+}
+
+body[data-mode="dark"] .badge-reassign-locked,
+[data-mode="dark"] .badge-reassign-locked {
+    background: rgba(148, 163, 184, 0.18) !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+body[data-mode="light"] .badge-reassign-locked,
+[data-mode="light"] .badge-reassign-locked {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.reassign-task-locked-notice {
+    font-size: 0.82rem !important;
+    border-radius: 8px !important;
+}
+
+body[data-mode="dark"] .reassign-task-locked-notice,
+[data-mode="dark"] .reassign-task-locked-notice {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #94a3b8 !important;
+    border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+}
+
+body[data-mode="light"] .reassign-task-locked-notice,
+[data-mode="light"] .reassign-task-locked-notice {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    border: 1px dashed #cbd5e1 !important;
+}
+
+/* Select element styling */
+.reassign-task-select {
+    font-size: 0.9rem !important;
+    border-radius: 8px !important;
+    padding: 0.45rem 0.75rem !important;
+}
+
+body[data-mode="dark"] .reassign-task-select,
+[data-mode="dark"] .reassign-task-select {
+    background-color: rgba(19, 9, 25, 0.85) !important;
+    color: #ffffff !important;
+    border-color: rgba(244, 114, 182, 0.35) !important;
+}
+
+body[data-mode="dark"] .reassign-task-select option,
+[data-mode="dark"] .reassign-task-select option {
+    background-color: #1c0f24 !important;
+    color: #ffffff !important;
+}
+
+body[data-mode="light"] .reassign-task-select,
+[data-mode="light"] .reassign-task-select {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Close button on dark modal */
+body[data-mode="dark"] .account-modal-dialog .btn-close,
+[data-mode="dark"] .account-modal-dialog .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* Reassign Button Dark/Bright States */
+.btn-reassign-dark {
+    background-color: #1e2125 !important;
+    border-color: #2b3035 !important;
+    color: #8e959d !important;
+    cursor: not-allowed !important;
+    opacity: 0.65 !important;
+    filter: brightness(0.65) grayscale(60%) !important;
+    box-shadow: none !important;
+    transition: all 0.25s ease-in-out;
+}
+
+.btn-reassign-bright {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    filter: brightness(1.12) !important;
+    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.5) !important;
+    transition: all 0.25s ease-in-out;
+}
+
+.btn-reassign-bright:hover {
+    background-color: #bb2d3b !important;
+    border-color: #b02a37 !important;
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.7) !important;
+}
+</style>
+
+{{ user_active_tasks|json_script:"user-active-tasks-data" }}
 {% endblock %}
 
 {% block extra_js %}
@@ -230,22 +691,300 @@ accountSearch?.addEventListener("input", () => {
         });
 });
 
-const resetModal = document.getElementById('resetPasswordConfirmModal');
+const resetModal =
+    document.getElementById("resetPasswordConfirmModal");
+
 if (resetModal) {
-    resetModal.addEventListener('show.bs.modal', (event) => {
+    resetModal.addEventListener("show.bs.modal", (event) => {
         const button = event.relatedTarget;
-        const userId = button.getAttribute('data-user-id');
-        const username = button.getAttribute('data-username');
-        const userName = button.getAttribute('data-user-name');
+        const userId = button.getAttribute("data-user-id");
+        const username = button.getAttribute("data-username");
+        const userName = button.getAttribute("data-user-name");
 
-        const nameEl = document.getElementById('resetTargetName');
-        const usernameEl = document.getElementById('resetTargetUsername');
-        const form = document.getElementById('adminResetPasswordForm');
+        const nameEl =
+            document.getElementById("resetTargetName");
 
-        if (nameEl) nameEl.textContent = userName;
-        if (usernameEl) usernameEl.textContent = `@${username}`;
+        const usernameEl =
+            document.getElementById("resetTargetUsername");
+
+        const form =
+            document.getElementById("adminResetPasswordForm");
+
+        if (nameEl) {
+            nameEl.textContent = userName;
+        }
+
+        if (usernameEl) {
+            usernameEl.textContent = `@${username}`;
+        }
+
         if (form && userId) {
-            form.action = `/accounts/${userId}/reset-password/`;
+            form.action =
+                `/accounts/${userId}/reset-password/`;
+        }
+    });
+}
+
+const userActiveTasksScript = document.getElementById("user-active-tasks-data");
+let userActiveTasksMap = {};
+if (userActiveTasksScript && userActiveTasksScript.textContent) {
+    try {
+        let parsed = JSON.parse(userActiveTasksScript.textContent);
+        if (typeof parsed === "string") {
+            parsed = JSON.parse(parsed);
+        }
+        userActiveTasksMap = parsed || {};
+    } catch (e) {
+        console.error("Failed to parse user active tasks data:", e);
+    }
+}
+
+const removeModal =
+    document.getElementById("removeMemberConfirmModal");
+
+if (removeModal) {
+    removeModal.addEventListener("show.bs.modal", (event) => {
+        const button = event.relatedTarget;
+
+        const userId =
+            button.getAttribute("data-user-id");
+
+        const username =
+            button.getAttribute("data-username");
+
+        const userName =
+            button.getAttribute("data-user-name");
+
+        const form =
+            document.getElementById("removeMemberForm");
+
+        const nameEl =
+            document.getElementById("removeTargetName");
+
+        const usernameEl =
+            document.getElementById("removeTargetUsername");
+
+        const allowedNotice =
+            document.getElementById("removeTasksAllowedNotice");
+
+        const reassignSection =
+            document.getElementById("removeTasksReassignSection");
+
+        const reassignCountEl =
+            document.getElementById("reassignTaskCount");
+
+        const reassignList =
+            document.getElementById("removeTasksReassignList");
+
+        const blockedNotice =
+            document.getElementById("removeTasksBlockedNotice");
+
+        const confirmBtn =
+            document.getElementById("confirmRemoveBtn");
+
+        if (nameEl) {
+            nameEl.textContent = userName;
+        }
+
+        if (usernameEl) {
+            usernameEl.textContent = `@${username}`;
+        }
+
+        if (form && userId) {
+            form.action =
+                `/accounts/${userId}/remove/`;
+        }
+
+        const userTasks = (userActiveTasksMap && userActiveTasksMap[String(userId)]) || [];
+        const activeTasks = userTasks.filter((t) => t.requires_reassign);
+        const completedTasks = userTasks.filter((t) => !t.requires_reassign);
+        const totalCount = userTasks.length;
+
+        const totalCountEl = document.getElementById("reassignTotalTasksCount");
+        const activeCountEl = document.getElementById("reassignActiveTasksCount");
+        const completedCountEl = document.getElementById("reassignCompletedTasksCount");
+        const legacyCountEl = document.getElementById("reassignTaskCount");
+        const actionPromptEl = document.getElementById("reassignActionPrompt");
+        const completedSubnoteEl = document.getElementById("reassignCompletedSubnote");
+
+        if (totalCount === 0) {
+            if (allowedNotice) allowedNotice.classList.remove("d-none");
+            if (reassignSection) reassignSection.classList.add("d-none");
+            if (blockedNotice) blockedNotice.classList.add("d-none");
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove("disabled", "btn-reassign-dark");
+                confirmBtn.classList.add("btn-danger", "btn-reassign-bright");
+                confirmBtn.textContent = "Confirm Remove";
+            }
+        } else {
+            if (allowedNotice) allowedNotice.classList.add("d-none");
+            if (reassignSection) reassignSection.classList.remove("d-none");
+
+            if (totalCountEl) totalCountEl.textContent = totalCount;
+            if (activeCountEl) activeCountEl.textContent = activeTasks.length;
+            if (completedCountEl) completedCountEl.textContent = completedTasks.length;
+            if (legacyCountEl) legacyCountEl.textContent = activeTasks.length;
+
+            if (activeTasks.length > 0) {
+                if (actionPromptEl) {
+                    actionPromptEl.textContent = "Select a new assignee for every active task below before this account can be removed.";
+                }
+            } else {
+                if (actionPromptEl) {
+                    actionPromptEl.textContent = "All assigned tasks are completed. Completed tasks remain locked in the database and do not require reassignment.";
+                }
+            }
+
+            if (completedTasks.length > 0) {
+                if (completedSubnoteEl) completedSubnoteEl.classList.remove("d-none");
+            } else {
+                if (completedSubnoteEl) completedSubnoteEl.classList.add("d-none");
+            }
+
+            let hasUnreassignableTask = false;
+            let listHtml = "";
+
+            userTasks.forEach((task) => {
+                const isSprint = task.is_sprint;
+                const sprintName = task.sprint_name || "";
+                const isCompleted = task.is_completed;
+                const requiresReassign = task.requires_reassign;
+
+                const locationBadge = isSprint
+                    ? `<span class="badge badge-reassign-sprint px-2 py-1"><i class="bi bi-kanban me-1"></i>Sprint: ${sprintName}</span>`
+                    : `<span class="badge badge-reassign-backlog px-2 py-1"><i class="bi bi-layers me-1"></i>Product Backlog</span>`;
+
+                if (requiresReassign) {
+                    const statusBadge = `<span class="badge badge-reassign-active px-2 py-1"><i class="bi bi-play-circle me-1"></i>Active (${task.status_display || "Not Started"})</span>`;
+                    const ruleHint = isSprint
+                        ? "Sprint team members only (excluding admin)"
+                        : "All members (excluding admin)";
+
+                    let optionsHtml = `<option value="" disabled selected>-- Select a team member --</option>`;
+                    if (task.eligible_members && task.eligible_members.length > 0) {
+                        task.eligible_members.forEach((m) => {
+                            optionsHtml += `<option value="${m.id}">${m.full_name} (@${m.username})</option>`;
+                        });
+                    } else {
+                        hasUnreassignableTask = true;
+                        optionsHtml = `<option value="" disabled selected>No eligible members available</option>`;
+                    }
+
+                    listHtml += `
+                        <div class="card border p-3 reassign-task-card shadow-sm">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <span class="reassign-task-title text-break">
+                                    <i class="bi bi-check2-square text-primary me-1"></i>${task.title}
+                                </span>
+                                <div class="d-flex align-items-center gap-1">
+                                    ${locationBadge}
+                                    ${statusBadge}
+                                </div>
+                            </div>
+                            <div class="mb-1">
+                                <label for="reassign_task_${task.id}" class="form-label reassign-label-wrap mb-1 d-flex justify-content-between align-items-center">
+                                    <span>Reassign to <span class="text-danger">*</span></span>
+                                    <span class="reassign-rule-hint">${ruleHint}</span>
+                                </label>
+                                <select class="form-select form-select-sm reassign-task-select"
+                                        id="reassign_task_${task.id}"
+                                        name="reassign_task_${task.id}"
+                                        required
+                                        ${task.eligible_members.length === 0 ? "disabled" : ""}>
+                                    ${optionsHtml}
+                                </select>
+                            </div>
+                            ${task.eligible_members.length === 0 ? `
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                    ${isSprint ? `Sprint "${sprintName}" has no other members to reassign this task to.` : "No eligible users available."}
+                                </div>
+                            ` : ""}
+                        </div>
+                    `;
+                } else {
+                    const statusBadge = `<span class="badge badge-reassign-completed px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>`;
+                    const lockedBadge = `<span class="badge badge-reassign-locked px-2 py-1"><i class="bi bi-lock-fill me-1"></i>Locked in Database</span>`;
+
+                    listHtml += `
+                        <div class="card border p-3 reassign-task-card shadow-sm opacity-90">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <span class="reassign-task-title text-break">
+                                    <i class="bi bi-check2-circle text-success me-1"></i>${task.title}
+                                </span>
+                                <div class="d-flex align-items-center gap-1">
+                                    ${locationBadge}
+                                    ${statusBadge}
+                                    ${lockedBadge}
+                                </div>
+                            </div>
+                            <div class="reassign-task-locked-notice p-2 mt-1">
+                                <i class="bi bi-lock-fill me-1 text-muted"></i>
+                                <strong>Locked in database:</strong> Completed tasks cannot be modified or reassigned under AgileFlow deadlock rules. This task will remain preserved in history.
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (reassignList) {
+                reassignList.innerHTML = listHtml;
+            }
+
+            if (hasUnreassignableTask) {
+                if (blockedNotice) blockedNotice.classList.remove("d-none");
+            } else {
+                if (blockedNotice) blockedNotice.classList.add("d-none");
+            }
+
+            const checkAllSelected = () => {
+                if (hasUnreassignableTask) {
+                    if (confirmBtn) {
+                        confirmBtn.disabled = true;
+                        confirmBtn.classList.remove("btn-danger", "btn-reassign-bright");
+                        confirmBtn.classList.add("btn-reassign-dark", "disabled");
+                        confirmBtn.textContent = "Cannot Remove (Reassignment Blocked)";
+                    }
+                    return;
+                }
+
+                if (activeTasks.length === 0) {
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.classList.remove("disabled", "btn-reassign-dark");
+                        confirmBtn.classList.add("btn-danger", "btn-reassign-bright");
+                        confirmBtn.textContent = "Confirm Remove";
+                    }
+                    return;
+                }
+
+                const selects = reassignList.querySelectorAll(".reassign-task-select");
+                let allSelected = true;
+                selects.forEach((sel) => {
+                    if (!sel.value) allSelected = false;
+                });
+
+                if (confirmBtn) {
+                    confirmBtn.disabled = !allSelected;
+                    if (allSelected) {
+                        confirmBtn.classList.remove("disabled", "btn-reassign-dark");
+                        confirmBtn.classList.add("btn-danger", "btn-reassign-bright");
+                        confirmBtn.textContent = "Confirm Remove & Reassign";
+                    } else {
+                        confirmBtn.classList.remove("btn-danger", "btn-reassign-bright");
+                        confirmBtn.classList.add("btn-reassign-dark", "disabled");
+                        confirmBtn.textContent = "Select Reassignee(s)";
+                    }
+                }
+            };
+
+            reassignList.querySelectorAll(".reassign-task-select").forEach((sel) => {
+                sel.addEventListener("change", checkAllSelected);
+                sel.addEventListener("input", checkAllSelected);
+            });
+
+            checkAllSelected();
         }
     });
 }

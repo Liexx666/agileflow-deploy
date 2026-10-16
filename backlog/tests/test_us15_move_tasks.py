@@ -24,6 +24,8 @@ class US15MoveTasksTestCase(TestCase):
             first_name="Sprint",
             last_name="Developer",
         )
+        from accounts.models import AccountSecurity
+        AccountSecurity.objects.filter(user=self.user).update(must_change_password=False)
         self.client.force_login(self.user)
 
         self.active_sprint = Sprint.objects.create(
@@ -95,11 +97,24 @@ class US15MoveTasksTestCase(TestCase):
         self.assertIn(self.active_sprint.name, history_entry.description)
         self.assertIn("Product Backlog", history_entry.description)
 
-    def test_reject_move_into_planning_sprint(self):
-        """AC 3: Reject moving tasks into a non-active sprint (planning)."""
+    def test_allow_move_into_planning_sprint(self):
+        """Moving tasks into a non-active sprint (planning/not_started) is allowed except cancelled or completed."""
         response = self.client.post(
             reverse("backlog:move_task", args=[self.backlog_task.pk]),
             {"sprint_id": self.planning_sprint.pk},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.backlog_task.refresh_from_db()
+        self.assertEqual(self.backlog_task.sprint, self.planning_sprint)
+
+    def test_reject_move_into_cancelled_sprint(self):
+        """Reject moving tasks into a cancelled sprint."""
+        cancelled_sprint = Sprint.objects.create(name="Cancelled Sprint", status="stopped")
+        cancelled_sprint.team_members.add(self.user)
+        response = self.client.post(
+            reverse("backlog:move_task", args=[self.backlog_task.pk]),
+            {"sprint_id": cancelled_sprint.pk},
         )
         self.assertEqual(response.status_code, 409)
 
@@ -207,4 +222,96 @@ class US15MoveTasksTestCase(TestCase):
         self.backlog_task.refresh_from_db()
         self.assertEqual(self.backlog_task.sprint, self.active_sprint)
         self.assertIsNone(self.backlog_task.assignee)
+
+    def test_move_task_with_assignee_not_in_sprint_returns_sprint_members(self):
+        """needs_assignee_decision response includes list of team members in the target sprint."""
+        other_user = User.objects.create_user(username="other_dev_list", password="Password123!")
+        sprint_member = User.objects.create_user(username="sprint_member_1", password="Password123!")
+        self.active_sprint.team_members.add(sprint_member)
+
+        self.backlog_task.assignee = other_user
+        self.backlog_task.save(update_fields=["assignee"])
+
+        response = self.client.post(
+            reverse("backlog:move_task", args=[self.backlog_task.pk]),
+            {"sprint_id": self.active_sprint.pk},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["needs_assignee_decision"])
+        self.assertIn("sprint_members", data)
+        member_ids = [m["id"] for m in data["sprint_members"]]
+        self.assertIn(sprint_member.id, member_ids)
+
+    def test_move_task_remove_assignee_and_reassign_to_sprint_member(self):
+        """Action remove_assignee with new_assignee_id assigns task to selected sprint team member."""
+        other_user = User.objects.create_user(username="other_dev_replace", password="Password123!")
+        sprint_member = User.objects.create_user(
+            username="sprint_member_picked",
+            password="Password123!",
+            first_name="Sprint",
+            last_name="Member",
+        )
+        self.active_sprint.team_members.add(sprint_member)
+
+        self.backlog_task.assignee = other_user
+        self.backlog_task.save(update_fields=["assignee"])
+
+        response = self.client.post(
+            reverse("backlog:move_task", args=[self.backlog_task.pk]),
+            {
+                "sprint_id": self.active_sprint.pk,
+                "assignee_action": "remove_assignee",
+                "new_assignee_id": sprint_member.id,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+
+        self.backlog_task.refresh_from_db()
+        self.assertEqual(self.backlog_task.sprint, self.active_sprint)
+        self.assertEqual(self.backlog_task.assignee, sprint_member)
+
+    def test_move_task_reassign_to_non_sprint_member_rejected(self):
+        """Cannot reassign task to someone who is not a team member of the sprint."""
+        other_user = User.objects.create_user(username="other_dev_orig", password="Password123!")
+        outsider = User.objects.create_user(username="outsider_user", password="Password123!")
+
+        self.backlog_task.assignee = other_user
+        self.backlog_task.save(update_fields=["assignee"])
+
+        response = self.client.post(
+            reverse("backlog:move_task", args=[self.backlog_task.pk]),
+            {
+                "sprint_id": self.active_sprint.pk,
+                "assignee_action": "remove_assignee",
+                "new_assignee_id": outsider.id,
+            },
+        )
+        self.assertEqual(response.status_code, 409)
+        data = response.json()
+        self.assertFalse(data["ok"])
+        self.assertIn("not a member of this sprint", str(data["errors"]))
+
+    def test_move_task_reassign_to_admin_rejected(self):
+        """Sprint tasks cannot be reassigned to an administrator."""
+        other_user = User.objects.create_user(username="other_dev_adm", password="Password123!")
+        admin_dev = User.objects.create_user(username="admin_dev", password="Password123!", is_staff=True)
+        self.active_sprint.team_members.add(admin_dev)
+
+        self.backlog_task.assignee = other_user
+        self.backlog_task.save(update_fields=["assignee"])
+
+        response = self.client.post(
+            reverse("backlog:move_task", args=[self.backlog_task.pk]),
+            {
+                "sprint_id": self.active_sprint.pk,
+                "assignee_action": "remove_assignee",
+                "new_assignee_id": admin_dev.id,
+            },
+        )
+        self.assertEqual(response.status_code, 409)
+        data = response.json()
+        self.assertFalse(data["ok"])
+        self.assertIn("administrator", str(data["errors"]).lower())
 

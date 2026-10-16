@@ -59,25 +59,27 @@ class SprintStoppedStatusTests(TestCase):
         self.not_started_sprint.refresh_from_db()
         self.assertEqual(self.not_started_sprint.status, "not_started")
 
-    def test_stopped_sprint_can_be_set_back_to_active(self):
-        """A stopped sprint should be reactivatable (set back to active)."""
+    def test_stopped_sprint_cannot_be_set_back_to_active(self):
+        """A stopped sprint cannot be reactivated (set back to active)."""
         self.active_sprint.status = "stopped"
         self.active_sprint.save(update_fields=["status"])
 
         response = self._set_status(self.active_sprint, "active")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("A cancelled Sprint cannot be changed anymore.", response.json()["errors"]["status"])
         self.active_sprint.refresh_from_db()
-        self.assertEqual(self.active_sprint.status, "active")
+        self.assertEqual(self.active_sprint.status, "stopped")
 
-    def test_stopped_sprint_can_be_set_to_completed(self):
-        """A stopped sprint can be set to completed."""
+    def test_stopped_sprint_cannot_be_set_to_completed(self):
+        """A stopped sprint cannot be set to completed."""
         self.active_sprint.status = "stopped"
         self.active_sprint.save(update_fields=["status"])
 
         response = self._set_status(self.active_sprint, "completed")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("A cancelled Sprint cannot be changed anymore.", response.json()["errors"]["status"])
         self.active_sprint.refresh_from_db()
-        self.assertEqual(self.active_sprint.status, "completed")
+        self.assertEqual(self.active_sprint.status, "stopped")
 
     def test_stopping_active_sprint_allows_new_sprint_to_become_active(self):
         """Stopping an active sprint should allow a not-started sprint to become active."""
@@ -115,3 +117,68 @@ class SprintStoppedStatusTests(TestCase):
         self.assertEqual(response.status_code, 409)
         task.refresh_from_db()
         self.assertIsNone(task.sprint)
+
+    def test_active_sprint_can_be_set_to_cancelled(self):
+        """An active sprint can be transitioned to 'cancelled' (stored as 'stopped')."""
+        response = self._set_status(self.active_sprint, "cancelled")
+        self.assertEqual(response.status_code, 200)
+        self.active_sprint.refresh_from_db()
+        self.assertEqual(self.active_sprint.status, "stopped")
+
+    def test_non_active_sprints_cannot_be_set_to_cancelled_or_stopped(self):
+        """Neither planning, not_started, nor completed sprints can be cancelled."""
+        planning_sprint = Sprint.objects.create(name="Planning Sprint", status="planning")
+        completed_sprint = Sprint.objects.create(name="Completed Sprint", status="completed")
+
+        for sprint in [self.not_started_sprint, planning_sprint, completed_sprint]:
+            for status_val in ["stopped", "cancelled"]:
+                response = self._set_status(sprint, status_val)
+                self.assertEqual(response.status_code, 409)
+                self.assertIn("Only active sprints can be cancelled.", response.json()["errors"]["status"])
+
+    def test_sprint_edit_form_choices_and_validation_for_cancelled_status(self):
+        """SprintEditForm excludes Cancelled for non-active sprints and validates active-only prerequisite."""
+        from backlog.forms import SprintEditForm
+        from datetime import date, timedelta
+
+        # 1. Unbound form on not-started sprint excludes Cancelled from choices
+        form_not_started = SprintEditForm(instance=self.not_started_sprint)
+        choice_values = [c[0] for c in form_not_started.fields["status"].choices]
+        choice_labels = [c[1] for c in form_not_started.fields["status"].choices]
+        self.assertNotIn("stopped", choice_values)
+        self.assertNotIn("cancelled", choice_values)
+        self.assertNotIn("Cancelled", choice_labels)
+
+        # 2. Unbound form on active sprint includes Cancelled exactly once
+        form_active = SprintEditForm(instance=self.active_sprint)
+        choice_labels = [c[1] for c in form_active.fields["status"].choices]
+        self.assertEqual(choice_labels.count("Cancelled"), 1)
+
+        # 3. Submitting status="cancelled" or "stopped" on non-active sprint fails validation
+        data_invalid = {
+            "name": "Sprint Attempt",
+            "start_date": date.today().isoformat(),
+            "end_date": (date.today() + timedelta(days=7)).isoformat(),
+            "status": "cancelled",
+        }
+        form_invalid = SprintEditForm(data=data_invalid, instance=self.not_started_sprint)
+        self.assertFalse(form_invalid.is_valid())
+        self.assertIn("Only active sprints can be cancelled.", form_invalid.errors["status"])
+
+        data_invalid["status"] = "stopped"
+        form_invalid_stopped = SprintEditForm(data=data_invalid, instance=self.not_started_sprint)
+        self.assertFalse(form_invalid_stopped.is_valid())
+        self.assertIn("Only active sprints can be cancelled.", form_invalid_stopped.errors["status"])
+
+        # 4. Submitting status="cancelled" on active sprint succeeds and normalizes to "stopped"
+        data_valid = {
+            "name": "Active Sprint Cancelled",
+            "start_date": date.today().isoformat(),
+            "end_date": (date.today() + timedelta(days=7)).isoformat(),
+            "status": "cancelled",
+        }
+        form_valid = SprintEditForm(data=data_valid, instance=self.active_sprint)
+        self.assertTrue(form_valid.is_valid())
+        saved_sprint = form_valid.save()
+        self.assertEqual(saved_sprint.status, "stopped")
+

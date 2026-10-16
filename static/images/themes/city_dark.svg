@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="cityNightSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#060911"/>
+      <stop offset="50%" stop-color="#0d1322"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <radialGradient id="cyberMoonGlow" cx="75%" cy="25%" r="40%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#f59e0b" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#060911" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="cyberGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#06b6d4" stroke-width="0.5" stroke-opacity="0.12"/>
+    </pattern>
+  </defs>
+
+  <!-- Sky Base & Cyber Grid -->
+  <rect width="1920" height="1080" fill="url(#cityNightSky)"/>
+  <rect width="1920" height="650" fill="url(#cyberGrid)"/>
+  <circle cx="1440" cy="270" r="350" fill="url(#cyberMoonGlow)"/>
+
+  <!-- Distant Background Buildings -->
+  <g fill="#09101d">
+    <rect x="100" y="500" width="120" height="580"/>
+    <rect x="260" y="560" width="90" height="520"/>
+    <rect x="390" y="470" width="140" height="610"/>
+    <rect x="580" y="540" width="110" height="540"/>
+    <rect x="730" y="420" width="130" height="660"/>
+    <rect x="900" y="510" width="120" height="570"/>
+    <rect x="1060" y="400" width="160" height="680"/>
+    <rect x="1260" y="490" width="110" height="590"/>
+    <rect x="1410" y="450" width="140" height="630"/>
+    <rect x="1590" y="540" width="120" height="540"/>
+  </g>
+
+  <!-- Midground Dark Buildings with Neon Edges -->
+  <g fill="#0c1626">
+    <rect x="180" y="600" width="130" height="480"/>
+    <rect x="350" y="530" width="160" height="550"/>
+    <rect x="550" y="610" width="130" height="470"/>
+    <!-- Iconic Center Cyber Tower -->
+    <rect x="880" y="460" width="170" height="620"/>
+    <polygon points="880,460 965,370 1050,460"/>
+    <line x1="965" y1="280" x2="965" y2="370" stroke="#06b6d4" stroke-width="3" stroke-opacity="0.8"/>
+    <circle cx="965" cy="280" r="4" fill="#f43f5e"/>
+
+    <rect x="1090" y="560" width="150" height="520"/>
+    <rect x="1280" y="520" width="140" height="560"/>
+    <rect x="1460" y="580" width="160" height="500"/>
+    <rect x="1660" y="550" width="130" height="530"/>
+  </g>
+
+  <!-- Glowing Neon Skyline Outlines -->
+  <polyline points="180,600 310,600 350,530 510,530 550,610 680,610 880,460 965,370 1050,460 1090,560 1240,560 1280,520 1420,520 1460,580 1620,580 1660,550 1790,550"
+            fill="none" stroke="#06b6d4" stroke-width="2" stroke-opacity="0.6"/>
+
+  <!-- Glowing Yellow/Cyan Windows Dots (Scattered Matrix) -->
+  <g fill="#f59e0b" opacity="0.65">
+    <rect x="200" y="630" width="6" height="8"/><rect x="220" y="630" width="6" height="8"/><rect x="240" y="670" width="6" height="8"/>
+    <rect x="370" y="560" width="8" height="8"/><rect x="410" y="560" width="8" height="8"/><rect x="450" y="600" width="8" height="8"/>
+    <rect x="900" y="500" width="8" height="8"/><rect x="940" y="500" width="8" height="8"/><rect x="980" y="500" width="8" height="8"/>
+    <rect x="920" y="540" width="8" height="8"/><rect x="960" y="540" width="8" height="8"/><rect x="1000" y="580" width="8" height="8"/>
+    <rect x="1300" y="550" width="8" height="8"/><rect x="1340" y="590" width="8" height="8"/><rect x="1380" y="550" width="8" height="8"/>
+  </g>
+  <g fill="#22d3ee" opacity="0.75">
+    <rect x="210" y="660" width="6" height="8"/><rect x="250" y="700" width="6" height="8"/>
+    <rect x="390" y="590" width="8" height="8"/><rect x="430" y="630" width="8" height="8"/>
+    <rect x="910" y="520" width="8" height="8"/><rect x="950" y="560" width="8" height="8"/><rect x="1010" y="520" width="8" height="8"/>
+    <rect x="1310" y="570" width="8" height="8"/><rect x="1350" y="610" width="8" height="8"/>
+  </g>
+
+  <!-- Highway Neon Light Beams -->
+  <path d="M-50,880 Q450,740 1020,870 T2020,850" fill="none" stroke="#f59e0b" stroke-width="3" stroke-opacity="0.6"/>
+  <path d="M-50,910 Q450,780 1020,900 T2020,890" fill="none" stroke="#06b6d4" stroke-width="3.5" stroke-opacity="0.7"/>
+  <path d="M-50,940 Q450,820 1020,930 T2020,920" fill="none" stroke="#ec4899" stroke-width="2" stroke-opacity="0.5"/>
+</svg>

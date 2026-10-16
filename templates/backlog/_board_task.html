@@ -1,6 +1,6 @@
 {% load work_time %}
 <div class="sprint-task-item mb-3">
-    <a href="{% url 'backlog:task_detail' task.id %}" class="sticky-task-card mb-1" style="cursor: pointer;" {% if can_edit_sprint %}draggable="true"{% endif %} data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-story-points="{{ task.story_points|default:0 }}">
+    <a href="{% url 'backlog:task_detail' task.id %}" class="sticky-task-card mb-1" style="cursor: pointer;" {% if can_edit_sprint and current_sprint.status == 'active' and task.status != 'completed' %}draggable="true"{% endif %} data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-story-points="{{ task.story_points|default:0 }}">
         <div class="sticky-task-title">• {{ task.title }}</div>
         {% if task.description %}<p class="text-muted fs-8 mb-2">{{ task.description|truncatechars:160 }}</p>{% endif %}
         <div class="sticky-task-meta">

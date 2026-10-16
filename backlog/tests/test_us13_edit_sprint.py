@@ -182,3 +182,24 @@ class EditSprintTests(TestCase):
         self.assertTrue(any("edited goal" in desc for desc in descriptions))
         for h in history_entries:
             self.assertEqual(h.changed_by, self.admin)
+
+    def test_remove_member_with_task_reassigned_to_sprint_member(self):
+        """When a member is removed from a sprint, their sprint task can be reassigned to a remaining sprint member."""
+        from backlog.models import Task, TaskHistory
+        self.client.force_login(self.admin)
+        task = Task.objects.create(
+            title="Sprint Subtask 1",
+            sprint=self.sprint,
+            assignee=self.member1,
+        )
+
+        data = self.valid_edit_data.copy()
+        data["team_members"] = [self.new_member.id]
+        data[f"reassign_task_{task.id}"] = self.new_member.id
+
+        response = self.client.post(self.url, data)
+        self.assertRedirects(response, reverse("backlog:product_backlog"))
+
+        task.refresh_from_db()
+        self.assertEqual(task.assignee, self.new_member)
+        self.assertTrue(TaskHistory.objects.filter(task=task).exists())

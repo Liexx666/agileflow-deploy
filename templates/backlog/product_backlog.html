@@ -19,16 +19,34 @@
         outline: 2px dashed #0d6efd !important;
         outline-offset: -2px;
     }
+    .dropzone.sprint-drop-blocked {
+        background-color: #fef2f2 !important;
+        outline: 2px dashed #ef4444 !important;
+        outline-offset: -2px;
+        cursor: not-allowed !important;
+    }
 </style>
-<div class="container-fluid px-4" data-backlog-manager>
-    <div class="d-flex border-bottom mb-4">
-        <a href="{% if selected_sprint %}{% url 'backlog:sprint_backlog' selected_sprint.id %}{% else %}{% url 'backlog:product_backlog' %}{% endif %}" class="text-decoration-none py-2 px-4 fw-semibold text-primary border-bottom border-primary border-2" style="margin-bottom: -2px;">
-            Backlog
+<div class="container-fluid px-2 px-sm-3 px-md-4" data-backlog-manager>
+    <div class="d-flex border-bottom mb-4 flex-nowrap overflow-x-auto pb-1" style="scrollbar-width: none;">
+        <a href="{% url 'backlog:product_backlog' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-primary border-bottom border-primary border-2 text-nowrap" style="margin-bottom: -2px;">
+            Sprint Board
         </a>
-        <a href="{% if selected_sprint %}{% url 'backlog:sprint_board_detail' selected_sprint.id %}{% else %}{% url 'backlog:sprint_board' %}{% endif %}" class="text-decoration-none py-2 px-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light" style="margin-bottom: -2px;">
-            Board
+        <a href="{% url 'backlog:product_backlog_only' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light text-nowrap" style="margin-bottom: -2px;">
+            Product Backlog
+        </a>
+        {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'accounts:admin_dashboard' %}" class="text-decoration-none py-2 px-3 px-sm-4 fw-semibold text-muted border-bottom border-transparent border-2 hover-bg-light text-nowrap" style="margin-bottom: -2px;">
+            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+        </a>
+        {% endif %}
+    </div>
+    {% if selected_sprint %}
+    <div class="mb-3">
+        <a href="{% url 'backlog:product_backlog' %}" class="back-link d-inline-flex align-items-center gap-1" id="backToSprintBoardBtn">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
     </div>
+    {% endif %}
     <div class="backlog-layout">
         <!-- ========================================================= -->
         <!-- MAIN WORKSPACE: Sprints and Product Backlog               -->
@@ -38,6 +56,7 @@
             <!-- Backlog Top Controls Toolbar -->
             <form method="GET" action="{{ backlog_url }}" id="filterForm">
                 <div class="backlog-header">
+                    {% if selected_sprint %}
                     <div>
                         <h1 class="backlog-title">{{ page_title }}</h1>
                         <div class="text-muted fs-7 mt-1">
@@ -107,18 +126,167 @@
                             </label>
                         </div>
                     </div>
+                    {% else %}
+                    <!-- Main Sprint Board View: Sprint-Level Controls -->
+                    <div>
+                        <h1 class="backlog-title">Sprint Board</h1>
+                        <div class="text-muted fs-7 mt-1 d-flex align-items-center gap-2 flex-wrap">
+                            <span class="fw-semibold text-dark">{{ total_sprints_count }}</span> sprints &bull;
+                            <span class="badge bg-success-subtle text-success">{{ active_sprints_count }} Active</span>
+                            <span class="badge bg-primary-subtle text-primary">{{ not_started_sprints_count }} Not Started</span>
+                            <span class="badge bg-secondary-subtle text-secondary">{{ completed_sprints_count }} Completed</span>
+                            {% if stopped_sprints_count %}
+                                <span class="badge bg-danger-subtle text-danger">{{ stopped_sprints_count }} Cancelled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="controls-toolbar d-flex align-items-center gap-2 flex-wrap">
+                        <!-- Sprint Status Filter -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="sprintStatusSelect" class="fw-bold text-dark mb-0 fs-7">Status:</label>
+                            <select name="sprint_status" id="sprintStatusSelect" class="form-select form-select-sm sort-select" onchange="this.form.submit()">
+                                <option value="" {% if not selected_sprint_status %}selected{% endif %}>All Sprints</option>
+                                <option value="active" {% if selected_sprint_status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="not_started" {% if selected_sprint_status == 'not_started' %}selected{% endif %}>Not Started</option>
+                                <option value="completed" {% if selected_sprint_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="stopped" {% if selected_sprint_status == 'stopped' or selected_sprint_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                        </div>
+
+                        <!-- View Toggle Switch -->
+                        <div class="view-toggle-wrapper d-flex align-items-center gap-2" title="Toggle between List View and Card View">
+                            <span class="view-toggle-label" id="viewLabelCard">Card View</span>
+                            <label class="view-toggle-switch" for="viewToggle" aria-label="Toggle card view">
+                                <input type="checkbox" id="viewToggle">
+                                <span class="view-toggle-track">
+                                    <span class="view-toggle-thumb"></span>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Create Sprint Button for staff/admin -->
+                        {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'backlog:create_sprint' %}" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 shadow-sm px-3" id="createSprintHeaderBtn">
+                            <i class="bi bi-plus-lg"></i> Create new sprint
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </form>
 
             <div class="row m-0 w-100 align-items-start" style="height: calc(100vh - 160px);">
+                {% if selected_sprint %}
                 <!-- ========================================================= -->
-                <!-- LEFT COLUMN: Sprint Backlog                               -->
+                <!-- LEFT COLUMN: Product Backlog (In Sprint Backlog Mgmt)     -->
                 <!-- ========================================================= -->
-                <div class="col-lg-6 ps-0 pe-lg-3 mb-4 d-flex flex-column h-100">
+                <div class="col-lg-6 ps-0 pe-lg-3 mb-4 d-flex flex-column h-100 dropzone" data-can-drop="true" id="product-backlog-dropzone">
                     <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 flex-shrink-0">
+                        <h2 class="sidebar-title mb-0">Product Backlog</h2>
+                    </div>
+
+                    <div class="flex-grow-1 overflow-y-auto pe-2 pb-5" style="scrollbar-width: thin;">
+
+                    <!-- LIST VIEW -->
+                    <div class="list-view-container overflow-x-auto pb-2" style="scrollbar-width: thin;">
+                        <div style="min-width: 480px;">
+                            <div class="backlog-list-header mb-1 text-uppercase text-muted" style="grid-template-columns: 1fr 100px 90px 45px; font-size: 0.75rem;">
+                                <div>Task name</div>
+                                <div class="text-center">Tags</div>
+                                <div class="text-center">Priority</div>
+                                <div class="text-center">Pts</div>
+                            </div>
+
+                            <div class="backlog-items-wrapper">
+                                {% for task in product_tasks %}
+                                <div class="backlog-task-row bg-white border rounded shadow-sm mb-2" style="grid-template-columns: 1fr 100px 90px 45px;" draggable="{% if task.status != 'completed' %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}">
+                                    <a href="{% url 'backlog:task_detail' task.id %}" draggable="{% if task.status != 'completed' %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}" class="task-name-box border-0 text-decoration-none shadow-none align-items-center" style="min-width: 0;" title="{{ task.title }}">
+                                        <div class="d-flex align-items-center gap-2 w-100" style="min-width: 0;">
+                                            {% if task.item_type == 'bug' %}
+                                                <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-8 fw-bold flex-shrink-0">Bug</span>
+                                            {% else %}
+                                                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-8 fw-bold flex-shrink-0">Story</span>
+                                            {% endif %}
+                                            <span class="task-title-text text-truncate">{{ task.title }}</span>
+                                        </div>
+                                    </a>
+
+                                    <div class="tags-box fs-8 d-flex align-items-center justify-content-center px-1" style="min-width: 0;">
+                                        <span class="text-truncate w-100 text-center">
+                                            {% for tag in task.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-white-50 font-italic">No tags</span>{% endfor %}
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="priority-box {{ task.priority }} fs-8 w-100" style="min-height: 0; padding: 0.25rem 0.5rem; height: fit-content;">
+                                            {{ task.get_priority_display }}
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="story-points-box fs-8" style="min-height: 0; padding: 0.25rem 0.5rem; height: fit-content; min-width: 32px;">
+                                            {{ task.story_points }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="card text-center p-5 border-dashed mt-2 shadow-sm bg-white">
+                                    <div class="text-muted fs-2 mb-2"><i class="bi bi-inbox"></i></div>
+                                    <h5 class="fs-5">No backlog items found</h5>
+                                    <p class="text-muted fs-7">Try adjusting your filters.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-view-container" style="display: none;">
+                        <div class="card-view-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+                            {% for task in product_tasks %}
+                            <div class="task-card priority-card-{{ task.priority }} text-decoration-none" draggable="{% if task.status != 'completed' %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}">
+                                <div class="task-card-header">
+                                    {% if task.item_type == 'bug' %}
+                                        <span class="task-card-type-badge task-card-type-bug"><i class="bi bi-bug-fill"></i> Bug</span>
+                                    {% else %}
+                                        <span class="task-card-type-badge task-card-type-story"><i class="bi bi-bookmark-fill"></i> Story</span>
+                                    {% endif %}
+                                    <span class="task-card-points">{{ task.story_points }}</span>
+                                </div>
+                                <a href="{% url 'backlog:task_detail' task.id %}" draggable="{% if task.status != 'completed' %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}" class="task-card-title text-dark text-decoration-none d-block">{{ task.title }}</a>
+                                <div class="task-card-divider my-2"></div>
+                                <div class="task-card-tags">
+                                    {% for tag in task.tags.all %}<span class="task-card-tag">{{ tag.name }}</span>{% empty %}<span class="task-card-no-tag">No tags</span>{% endfor %}
+                                </div>
+                                <div class="task-card-footer mt-2 mb-2">
+                                    <span class="task-card-priority-label">{{ task.get_priority_display }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="card text-center p-5 border-dashed mt-2 shadow-sm bg-white" style="grid-column: 1 / -1;">
+                                <div class="text-muted fs-2 mb-2"><i class="bi bi-inbox"></i></div>
+                                <h5 class="fs-5">No backlog items found</h5>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    </div> <!-- End of scrollable area -->
+                </div>
+                {% endif %}
+
+                <!-- ========================================================= -->
+                <!-- SPRINT BOARD / SPRINT BACKLOG                             -->
+                <!-- ========================================================= -->
+                <div class="{% if selected_sprint %}col-lg-6 ps-lg-3 pe-0{% else %}col-12 px-0{% endif %} mb-4 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 pe-3 flex-shrink-0">
                         <h2 class="sidebar-title mb-0">Sprint Backlog</h2>
-                        {% if user.is_staff or user.is_superuser %}
-                        <a href="{% url 'backlog:deleted_sprints' %}" class="text-decoration-underline fw-bold fs-6" style="color: #4b3f72 !important;">Deleted Sprints</a>
+                        {% if not selected_sprint %}
+                            {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'backlog:deleted_sprints' %}" class="btn btn-sm deleted-sprints-link d-inline-flex align-items-center gap-1 me-2">
+                                <i class="bi bi-trash3 me-1"></i>Deleted Sprints
+                            </a>
+                            {% endif %}
                         {% endif %}
                     </div>
                     
@@ -130,26 +298,25 @@
                             <div class="sprint-header d-flex justify-content-between align-items-center p-2 border-bottom bg-light rounded-top user-select-none" style="cursor: pointer;" onclick="toggleSprintCollapse(event, 'sprintCollapse{{ sprint.id }}')" aria-expanded="{% if selected_sprint or sprint.status == 'active' %}true{% else %}false{% endif %}">
                                 <div class="d-flex align-items-center gap-2">
                                     <i class="bi bi-chevron-down text-muted ms-1 sprint-chevron" style="transition: transform 0.2s; font-size: 0.95rem; {% if sprint.status != 'active' %}transform: rotate(-90deg);{% endif %}"></i>
-                                    <a href="{% url 'backlog:sprint_backlog' sprint.id %}" class="fs-6 mb-0 fw-bold text-decoration-none text-dark">
+                                    <span class="fs-6 mb-0 fw-bold text-dark sprint-name-title" style="cursor: pointer;" {% if sprint.status not in 'completed stopped cancelled' %}{% if user.is_staff or user.is_superuser or sprint.can_edit %}ondblclick="event.stopPropagation(); window.location.href='{% url 'backlog:edit_sprint' sprint.id %}?next={{ request.path|urlencode }}';" title="Double-click to edit sprint"{% endif %}{% endif %}>
                                         {{ sprint.name }}
-                                    </a>
+                                    </span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="text-muted fs-8 fw-medium me-1">{{ sprint.filtered_tasks|length }} tasks</span>
                                     <span class="badge {{ sprint.status_badge_class }} py-1 px-2 fs-8 rounded-pill">{{ sprint.get_status_display }}</span>
-                                    <div class="dropdown ms-2">
-                                        <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; padding: 0;" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sprint Options">
-                                            <i class="bi bi-three-dots-vertical text-dark"></i>
+                                    {% if not selected_sprint %}
+                                    <a href="{% url 'backlog:sprint_backlog' sprint.id %}" class="btn btn-sm btn-outline-primary py-1 px-2 fs-8 fw-semibold text-decoration-none shadow-sm" title="Manage sprint backlog" onclick="event.stopPropagation();" id="manageSprintHeaderBtn_{{ sprint.id }}">
+                                        Manage sprint
+                                    </a>
+                                    <div class="dropdown ms-1">
+                                        <button class="btn btn-light btn-sm rounded-circle shadow-sm border d-flex align-items-center justify-content-center sprint-options-btn" style="width: 30px; height: 30px; padding: 0;" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sprint Options">
+                                            <i class="bi bi-three-dots-vertical"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end shadow-sm fs-7">
-                                            {% if user.is_staff or user.is_superuser %}
-                                                <li><a class="dropdown-item py-2" href="{% url 'backlog:edit_sprint' sprint.id %}?next={{ request.path|urlencode }}"><i class="bi bi-pencil-square me-2 text-muted"></i>Edit Sprint</a></li>
-                                                <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Sprint Board</a></li>
-                                                {% if sprint.status == 'stopped' or sprint.status == 'not_started' %}
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li><a class="dropdown-item py-2 text-danger" href="{% url 'backlog:delete_sprint' sprint.id %}"><i class="bi bi-trash3 me-2 text-danger"></i>Delete Sprint</a></li>
-                                                {% endif %}
-                                            {% else %}
+                                            <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_detail' sprint.id %}"><i class="bi bi-info-circle me-2 text-muted"></i>Sprint Information</a></li>
+                                            <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Board</a></li>
+                                            {% if not user.is_staff and not user.is_superuser %}
                                                 <li>
                                                     <button type="button" class="dropdown-item py-2 w-100 text-start" data-bs-toggle="modal" data-bs-target="#scrumMasterModal{{ sprint.id }}">
                                                         <i class="bi bi-person-badge me-2 text-muted"></i>Select Scrum Master
@@ -160,10 +327,10 @@
                                                         <i class="bi bi-person-check me-2 text-muted"></i>Select Product Owner
                                                     </button>
                                                 </li>
-                                                <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Sprint Board</a></li>
                                             {% endif %}
                                         </ul>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -215,9 +382,10 @@
                                             </div>
 
                                             <div class="d-flex align-items-center p-1">
-                                                {% if sprint.can_edit %}
+                                                {% if sprint.can_edit and sprint.status not in 'completed stopped cancelled' and task.status != 'completed' %}
                                                 <form action="{% url 'backlog:update_task_status' task.id %}" method="POST" class="w-100 m-0 p-0">
                                                     {% csrf_token %}
+                                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                                     <select name="status" class="form-select form-select-sm fs-8 shadow-none border-secondary-subtle" onchange="this.form.submit()">
                                                         <option value="not_started" {% if task.status == 'not_started' %}selected{% endif %}>Not Started</option>
                                                         <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
@@ -242,7 +410,7 @@
                             <div class="card-view-container" style="display: none;">
                                 <div class="card-view-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
                                     {% for task in sprint.filtered_tasks %}
-                                    <div class="task-card priority-card-{{ task.priority }} text-decoration-none" {% if sprint.can_drag %}draggable="true"{% endif %} data-task-id="{{ task.id }}">
+                                    <div class="task-card priority-card-{{ task.priority }} text-decoration-none" {% if sprint.can_drag and task.status != 'completed' %}draggable="true"{% endif %} data-task-id="{{ task.id }}">
                                         <div class="task-card-header">
                                             {% if task.item_type == 'bug' %}
                                                 <span class="task-card-type-badge task-card-type-bug"><i class="bi bi-bug-fill"></i> Bug</span>
@@ -251,7 +419,7 @@
                                             {% endif %}
                                             <span class="task-card-points">{{ task.story_points }}</span>
                                         </div>
-                                        <a href="{% url 'backlog:task_detail' task.id %}" draggable="{% if not task.sprint or sprint.can_drag %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}" class="task-card-title text-dark text-decoration-none d-block">{{ task.title }}</a>
+                                        <a href="{% url 'backlog:task_detail' task.id %}" draggable="{% if sprint.can_drag and task.status != 'completed' %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}" class="task-card-title text-dark text-decoration-none d-block">{{ task.title }}</a>
                                         <div class="task-card-divider my-2"></div>
                                         <div class="task-card-tags">
                                             {% for tag in task.tags.all %}<span class="task-card-tag">{{ tag.name }}</span>{% empty %}<span class="task-card-no-tag">No tags</span>{% endfor %}
@@ -259,9 +427,10 @@
                                         <div class="task-card-footer mt-2 mb-2">
                                             <span class="task-card-priority-label">{{ task.get_priority_display }}</span>
                                         </div>
-                                        {% if sprint.can_edit %}
+                                        {% if sprint.can_edit and sprint.status not in 'completed stopped cancelled' and task.status != 'completed' %}
                                         <form action="{% url 'backlog:update_task_status' task.id %}" method="POST" class="w-100 m-0 p-0 border-top pt-2 mt-2">
                                             {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                             <select name="status" class="form-select form-select-sm fs-8 shadow-none" onchange="this.form.submit()">
                                                 <option value="not_started" {% if task.status == 'not_started' %}selected{% endif %}>Not Started</option>
                                                 <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
@@ -294,125 +463,6 @@
                         </div>
                     {% endif %}
 
-                    {% if user.is_staff or user.is_superuser %}
-                    <div class="mt-4 pt-2">
-                        <a href="{% url 'backlog:create_sprint' %}" class="btn btn-create-task shadow-sm w-100 text-center">
-                            Create new sprint
-                        </a>
-                    </div>
-                    {% endif %}
-                    </div> <!-- End of scrollable area -->
-                </div>
-
-                <!-- ========================================================= -->
-                <!-- RIGHT COLUMN: Product Backlog                             -->
-                <!-- ========================================================= -->
-                <div class="col-lg-6 ps-lg-3 pe-0 mb-4 d-flex flex-column h-100 dropzone" data-can-drop="true" id="product-backlog-dropzone">
-                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 flex-shrink-0">
-                        <h2 class="sidebar-title mb-0">Product Backlog</h2>
-                        {% if user.is_staff or user.is_superuser %}
-                        <a href="{% url 'backlog:deleted_tasks' %}" class="text-decoration-underline fw-bold fs-6" style="color: #4b3f72 !important;">Deleted Tasks</a>
-                        {% endif %}
-                    </div>
-
-                    <div class="flex-grow-1 overflow-y-auto pe-2 pb-5" style="scrollbar-width: thin;">
-
-                    <!-- LIST VIEW -->
-                    <div class="list-view-container overflow-x-auto pb-2" style="scrollbar-width: thin;">
-                        <div style="min-width: 480px;">
-                            <div class="backlog-list-header mb-1 text-uppercase text-muted" style="grid-template-columns: 1fr 100px 90px 45px; font-size: 0.75rem;">
-                                <div>Task name</div>
-                                <div class="text-center">Tags</div>
-                                <div class="text-center">Priority</div>
-                                <div class="text-center">Pts</div>
-                            </div>
-
-                            <div class="backlog-items-wrapper">
-                                {% for task in product_tasks %}
-                                <div class="backlog-task-row bg-white border rounded shadow-sm mb-2" style="grid-template-columns: 1fr 100px 90px 45px;" draggable="true" data-task-id="{{ task.id }}">
-                                    <a href="{% url 'backlog:task_detail' task.id %}" draggable="{% if not task.sprint or sprint.can_drag %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}" class="task-name-box border-0 text-decoration-none shadow-none align-items-center" style="min-width: 0;" title="{{ task.title }}">
-                                        <div class="d-flex align-items-center gap-2 w-100" style="min-width: 0;">
-                                            {% if task.item_type == 'bug' %}
-                                                <span class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1 fs-8 fw-bold flex-shrink-0">Bug</span>
-                                            {% else %}
-                                                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fs-8 fw-bold flex-shrink-0">Story</span>
-                                            {% endif %}
-                                            <span class="task-title-text text-truncate">{{ task.title }}</span>
-                                        </div>
-                                    </a>
-
-                                    <div class="tags-box fs-8 d-flex align-items-center justify-content-center px-1" style="min-width: 0;">
-                                        <span class="text-truncate w-100 text-center">
-                                            {% for tag in task.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-white-50 font-italic">No tags</span>{% endfor %}
-                                        </span>
-                                    </div>
-
-                                    <div class="d-flex align-items-center justify-content-center">
-                                        <div class="priority-box {{ task.priority }} fs-8 w-100" style="min-height: 0; padding: 0.25rem 0.5rem; height: fit-content;">
-                                            {{ task.get_priority_display }}
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex align-items-center justify-content-center">
-                                        <div class="story-points-box fs-8" style="min-height: 0; padding: 0.25rem 0.5rem; height: fit-content; min-width: 32px;">
-                                            {{ task.story_points }}
-                                        </div>
-                                    </div>
-                                </div>
-                                {% empty %}
-                                <div class="card text-center p-5 border-dashed mt-2 shadow-sm bg-white">
-                                    <div class="text-muted fs-2 mb-2"><i class="bi bi-inbox"></i></div>
-                                    <h5 class="fs-5">No backlog items found</h5>
-                                    <p class="text-muted fs-7">Try adjusting your filters or create a new task below.</p>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card-view-container" style="display: none;">
-                        <div class="card-view-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
-                            {% for task in product_tasks %}
-                            <div class="task-card priority-card-{{ task.priority }} text-decoration-none" draggable="true" data-task-id="{{ task.id }}">
-                                <div class="task-card-header">
-                                    {% if task.item_type == 'bug' %}
-                                        <span class="task-card-type-badge task-card-type-bug"><i class="bi bi-bug-fill"></i> Bug</span>
-                                    {% else %}
-                                        <span class="task-card-type-badge task-card-type-story"><i class="bi bi-bookmark-fill"></i> Story</span>
-                                    {% endif %}
-                                    <span class="task-card-points">{{ task.story_points }}</span>
-                                </div>
-                                <a href="{% url 'backlog:task_detail' task.id %}" draggable="{% if not task.sprint or sprint.can_drag %}true{% else %}false{% endif %}" data-task-id="{{ task.id }}" class="task-card-title text-dark text-decoration-none d-block">{{ task.title }}</a>
-                                <div class="task-card-divider my-2"></div>
-                                <div class="task-card-tags">
-                                    {% for tag in task.tags.all %}<span class="task-card-tag">{{ tag.name }}</span>{% empty %}<span class="task-card-no-tag">No tags</span>{% endfor %}
-                                </div>
-                                <div class="task-card-footer mt-2 mb-2">
-                                    <span class="task-card-priority-label">{{ task.get_priority_display }}</span>
-                                </div>
-                                        <form action="{% url 'backlog:update_task_status' task.id %}" method="POST" class="w-100 m-0 p-0 border-top pt-2 mt-2" style="display: none;">
-                                            {% csrf_token %}
-                                            <select name="status" class="form-select form-select-sm fs-8 shadow-none" onchange="this.form.submit()">
-                                                <option value="not_started" {% if task.status == 'not_started' %}selected{% endif %}>Not Started</option>
-                                                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                                                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>Completed</option>
-                                            </select>
-                                        </form>
-                            </div>
-                            {% empty %}
-                            <div class="card text-center p-5 border-dashed mt-2 shadow-sm bg-white" style="grid-column: 1 / -1;">
-                                <div class="text-muted fs-2 mb-2"><i class="bi bi-inbox"></i></div>
-                                <h5 class="fs-5">No backlog items found</h5>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-2">
-                        <a class="btn btn-create-task shadow-sm w-100 text-center" href="{% url 'backlog:create_task' %}{% if selected_sprint %}?backlog_sprint={{ selected_sprint.id }}{% endif %}">
-                            Create new task
-                        </a>
-                    </div>
                     </div> <!-- End of scrollable area -->
                 </div>
             </div>
@@ -459,6 +509,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+
+{% if not selected_sprint %}
 <!-- Modals outside layout constraints -->
 {% for sprint in sprints %}
     <!-- Scrum Master Modal -->
@@ -516,34 +569,59 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
     </div>
-
 {% endfor %}
+{% endif %}
 
 <!-- Assignee Sprint Membership Decision Modal -->
 <div class="modal fade" id="assigneeDecisionModal" tabindex="-1" aria-labelledby="assigneeDecisionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content shadow border-0 rounded-4">
             <div class="modal-header border-0 pb-0 pt-4 px-4">
-                <h5 class="modal-title fw-bold text-dark fs-5" id="assigneeDecisionModalLabel">
-                    <i class="bi bi-person-exclamation text-warning me-2"></i>Assignee Not in Sprint
+                <h5 class="modal-title fw-bold fs-5" id="assigneeDecisionModalLabel" style="color: var(--theme-text-headings) !important;">
+                    <i class="bi bi-person-exclamation text-warning me-2" id="assigneeModalTitleIcon"></i><span id="assigneeModalTitleText">Assignee Not in Sprint</span>
                 </h5>
                 <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body px-4 py-3">
-                <p class="text-secondary mb-2">
-                    <strong class="text-dark" id="assigneeModalName"></strong> is currently assigned to this task, but is not a member of <strong class="text-dark" id="assigneeModalSprint"></strong>.
-                </p>
-                <p class="text-secondary mb-0">
-                    Would you like to add <strong class="text-dark" id="assigneeModalNamePrompt"></strong> into this sprint, or remove the assignee from the task?
-                </p>
+                <div id="assigneeDecisionStep1">
+                    <p class="mb-2" style="color: var(--theme-text-main);">
+                        <strong id="assigneeModalName" style="color: var(--theme-text-headings);"></strong> is currently assigned to this task, but is not a member of <strong id="assigneeModalSprint" style="color: var(--theme-text-headings);"></strong>.
+                    </p>
+                    <p class="mb-0" style="color: var(--theme-text-main);">
+                        Would you like to add <strong id="assigneeModalNamePrompt" style="color: var(--theme-text-headings);"></strong> into this sprint, or remove the assignee from the task?
+                    </p>
+                </div>
+                <div id="assigneeDecisionStep2" class="d-none">
+                    <p class="mb-2" style="color: var(--theme-text-main);">
+                        Remove <strong id="assigneeReassignOldName" style="color: var(--theme-text-headings);"></strong> from this task and choose an assignee from the team members in <strong id="assigneeReassignSprint" style="color: var(--theme-text-headings);"></strong>:
+                    </p>
+                    <div class="mb-2">
+                        <label for="selectNewSprintAssignee" class="form-label fw-semibold small" style="color: var(--theme-text-headings);">Sprint Assignee:</label>
+                        <select class="form-select rounded-3 py-2 shadow-sm task-reassign-select" id="selectNewSprintAssignee">
+                            <option value="">-- Unassigned (Leave without assignee) --</option>
+                        </select>
+                    </div>
+                    <div id="sprintMembersEmptyNote" class="alert alert-warning py-2 px-3 small d-none rounded-3 mt-2 mb-0">
+                        <i class="bi bi-info-circle me-1"></i>No team members found in this sprint. The task will be left unassigned.
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-end gap-2">
+            <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-end gap-2" id="assigneeFooterStep1">
                 <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger rounded-pill px-3 shadow-sm" id="btnRemoveAssignee">
                     <i class="bi bi-person-x me-1"></i>Remove Assignee
                 </button>
                 <button type="button" class="btn btn-primary rounded-pill px-3 shadow-sm" id="btnAddAssigneeToSprint">
                     <i class="bi bi-person-plus me-1"></i>Add to Sprint
+                </button>
+            </div>
+            <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-end gap-2 d-none" id="assigneeFooterStep2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="btnBackToStep1">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </button>
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm fw-semibold" id="btnConfirmNewAssignee">
+                    <i class="bi bi-check-circle me-1"></i>Confirm & Move
                 </button>
             </div>
         </div>

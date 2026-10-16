@@ -19,7 +19,8 @@ class Sprint(models.Model):
     STATUS_CHOICES = [
         ('not_started', 'Not Started'),
         ('active', 'Active'),
-        ('stopped', 'Stopped'),
+        ('stopped', 'Cancelled'),
+        ('cancelled', 'Cancelled'),
         ('completed', 'Completed'),
         ('planning', 'Planning'),
     ]
@@ -69,11 +70,63 @@ class Sprint(models.Model):
     def status_badge_class(self):
         if self.status == 'completed':
             return 'badge-sprint-completed'
-        elif self.status == 'stopped':
+        elif self.status in ['stopped', 'cancelled']:
             return 'badge-sprint-stopped'
         elif self.status in ['active', 'in_progress']:
             return 'badge-sprint-active'
         return 'badge-sprint-planning'
+
+    def save(self, *args, **kwargs):
+        is_cancelling = False
+        is_completing = False
+        if self.pk:
+            orig_status = (
+                Sprint.objects.filter(pk=self.pk)
+                .values_list('status', flat=True)
+                .first()
+            )
+            if (
+                orig_status
+                and orig_status not in ['stopped', 'cancelled']
+                and self.status in ['stopped', 'cancelled']
+            ):
+                is_cancelling = True
+            elif (
+                orig_status
+                and orig_status != 'completed'
+                and self.status == 'completed'
+            ):
+                is_completing = True
+
+        super().save(*args, **kwargs)
+
+        if is_cancelling:
+            self.return_incomplete_tasks_to_product_backlog(reason="cancelled")
+        elif is_completing:
+            self.return_incomplete_tasks_to_product_backlog(reason="completed")
+
+    def return_incomplete_tasks_to_product_backlog(self, reason="cancelled"):
+        """
+        When a sprint is cancelled or completed, all incomplete tasks (status != 'completed')
+        automatically return to the product backlog (sprint=None).
+        Tasks with status 'completed' remain attached to the sprint.
+        """
+        changed_by = getattr(self, '_changed_by', None)
+        user_name = (
+            changed_by.get_full_name() or changed_by.username
+            if changed_by else "System"
+        )
+        verb = "completed" if reason == "completed" else "cancelled"
+        incomplete_tasks = list(self.tasks.exclude(status='completed'))
+        for task in incomplete_tasks:
+            task.sprint = None
+            task.save(update_fields=['sprint', 'updated_at'])
+            TaskHistory.objects.create(
+                task=task,
+                changed_by=changed_by,
+                description=f"{user_name} moved {task.title[:100]} back to Product Backlog because sprint '{self.name[:50]}' was {verb}",
+            )
+        return incomplete_tasks
 
 
 class SprintBurndownSnapshot(models.Model):

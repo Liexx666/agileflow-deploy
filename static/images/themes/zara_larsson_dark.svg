@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="zlDarkSky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0714"/>
+      <stop offset="40%" stop-color="#180a22"/>
+      <stop offset="75%" stop-color="#240b2a"/>
+      <stop offset="100%" stop-color="#15051a"/>
+    </linearGradient>
+    <radialGradient id="neonSunsetGlow" cx="50%" cy="85%" r="65%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.5"/>
+      <stop offset="25%" stop-color="#d946ef" stop-opacity="0.32"/>
+      <stop offset="60%" stop-color="#86198f" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0f0714" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="darkWave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#e11d48" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#c026d3" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ea580c" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="stageBeams" x1="50%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#d946ef" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky Base -->
+  <rect width="1920" height="1080" fill="url(#zlDarkSky)"/>
+
+  <!-- Stage Lights Fan Beams -->
+  <polygon points="960,950 200,-100 450,-100" fill="url(#stageBeams)"/>
+  <polygon points="960,950 700,-100 950,-100" fill="url(#stageBeams)" opacity="0.7"/>
+  <polygon points="960,950 1470,-100 1720,-100" fill="url(#stageBeams)"/>
+  <polygon points="960,950 1050,-100 1300,-100" fill="url(#stageBeams)" opacity="0.6"/>
+
+  <!-- Neon Sunset Dome Glow -->
+  <circle cx="960" cy="900" r="750" fill="url(#neonSunsetGlow)"/>
+
+  <!-- Concentric Neon Waves -->
+  <circle cx="960" cy="900" r="540" fill="none" stroke="#d946ef" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="14 16"/>
+  <circle cx="960" cy="900" r="390" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-width="2.5"/>
+  <circle cx="960" cy="900" r="220" fill="none" stroke="#f43f5e" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="8 8"/>
+
+  <!-- Sweeping Fluid Wave Horizons -->
+  <path d="M-100,740 C380,620 720,840 1120,710 C1520,580 1760,780 2050,710 L2050,1100 L-100,1100 Z" fill="url(#darkWave1)"/>
+  <path d="M-100,840 C320,760 660,910 1060,800 C1460,690 1720,880 2050,820 L2050,1100 L-100,1100 Z" fill="#180a22" opacity="0.75"/>
+
+  <!-- Luminous Soundwave Curves -->
+  <path d="M-50,670 Q450,530 950,700 T1950,620" fill="none" stroke="#fb923c" stroke-width="2" stroke-opacity="0.5"/>
+  <path d="M-50,720 Q500,580 1000,750 T2000,670" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-opacity="0.45"/>
+  <path d="M-50,770 Q550,630 1050,800 T2050,720" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-opacity="0.55"/>
+
+  <!-- Glowing Stardust Particles -->
+  <circle cx="280" cy="220" r="2.5" fill="#fbcfe8" opacity="0.7"/>
+  <circle cx="480" cy="160" r="3" fill="#fed7aa" opacity="0.8"/>
+  <circle cx="760" cy="280" r="2" fill="#ffffff" opacity="0.9"/>
+  <circle cx="1140" cy="180" r="2.5" fill="#fbcfe8" opacity="0.6"/>
+  <circle cx="1420" cy="250" r="3.5" fill="#f97316" opacity="0.7"/>
+  <circle cx="1650" cy="140" r="2" fill="#ffffff" opacity="0.85"/>
+  <circle cx="1800" cy="300" r="3" fill="#f472b6" opacity="0.7"/>
+</svg>

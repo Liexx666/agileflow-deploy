@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+    <defs>
+        <linearGradient id="cityLGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2563eb" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#cbd5e1" stop-opacity="0.3"/>
+        </linearGradient>
+    </defs>
+    <!-- Architectural grid lines -->
+    <line x1="10" y1="52" x2="230" y2="52" stroke="#94a3b8" stroke-width="1.2"/>
+    <line x1="20" y1="46" x2="220" y2="46" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="3 3"/>
+    <!-- Modern skyline building silhouettes -->
+    <rect x="140" y="24" width="16" height="28" fill="#93c5fd" opacity="0.6"/>
+    <polygon points="148,16 140,24 156,24" fill="#3b82f6" opacity="0.7"/>
+    <!-- Center Skyscraper with spire -->
+    <rect x="162" y="14" width="22" height="38" fill="url(#cityLGrad)" stroke="#2563eb" stroke-width="0.8"/>
+    <line x1="173" y1="4" x2="173" y2="14" stroke="#1d4ed8" stroke-width="1.5"/>
+    <circle cx="173" cy="4" r="1.5" fill="#ef4444"/>
+    <!-- Geometric window grid -->
+    <line x1="168" y1="20" x2="168" y2="46" stroke="#ffffff" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.7"/>
+    <line x1="178" y1="20" x2="178" y2="46" stroke="#ffffff" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.7"/>
+    <!-- Stepped Highrise -->
+    <rect x="190" y="22" width="18" height="30" fill="#60a5fa" opacity="0.55"/>
+    <rect x="194" y="18" width="10" height="4" fill="#3b82f6" opacity="0.6"/>
+    <!-- Suspension bridge cable fan -->
+    <path d="M75 52 L 105 28 L 105 52" stroke="#3b82f6" stroke-width="1.2" opacity="0.7" fill="none"/>
+    <line x1="105" y1="28" x2="90" y2="52" stroke="#60a5fa" stroke-width="0.8" opacity="0.6"/>
+    <line x1="105" y1="28" x2="82" y2="52" stroke="#93c5fd" stroke-width="0.8" opacity="0.5"/>
+    <!-- Technical design compass circle -->
+    <circle cx="45" cy="30" r="14" stroke="#2563eb" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>
+    <line x1="45" y1="12" x2="45" y2="48" stroke="#2563eb" stroke-width="0.8" opacity="0.4"/>
+</svg>

@@ -8,6 +8,7 @@ app_name = "backlog"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("product-backlog/", views.product_backlog_only, name="product_backlog_only"),
     path("backlog/", views.product_backlog, name="product_backlog"),
     path("sprints/<int:sprint_id>/backlog/", views.product_backlog, name="sprint_backlog"),
     path("sprint-board/", views.sprint_board, name="sprint_board"),
@@ -49,4 +50,16 @@ urlpatterns = [
     path("tasks/<int:task_id>/recover/", views.recover_task, name="recover_task"),
     path("deleted-sprints/", views.deleted_sprints, name="deleted_sprints"),
     path("sprints/<int:sprint_id>/recover/", views.recover_sprint, name="recover_sprint"),
+
+        # US-24 / US-26
+    path(
+        "dashboard/",
+        views.admin_dashboard,
+        name="admin_dashboard",
+    ),
+    path(
+        "dashboard/member/<int:user_id>/",
+        views.dashboard_member_detail,
+        name="dashboard_member_detail",
+    ),
 ]

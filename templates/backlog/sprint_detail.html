@@ -16,18 +16,25 @@
         <div class="d-flex align-items-center gap-3">
             <span class="badge {{ sprint.status_badge_class }} rounded-pill px-3 py-2 fs-7 shadow-sm border">{{ sprint.get_status_display }}</span>
             <div class="dropdown">
-                <button class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0;" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sprint Options">
-                    <i class="bi bi-three-dots-vertical text-dark fs-5"></i>
+                <button class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center sprint-options-btn" style="width: 36px; height: 36px; padding: 0;" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Sprint Options">
+                    <i class="bi bi-three-dots-vertical fs-5"></i>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm fs-7">
                     {% if user.is_staff or user.is_superuser %}
+                        {% if sprint.status not in 'completed stopped cancelled' %}
                         <li><a class="dropdown-item py-2" href="{% url 'backlog:edit_sprint' sprint.id %}?next={{ request.path|urlencode }}"><i class="bi bi-pencil-square me-2 text-muted"></i>Edit Sprint</a></li>
+                        {% endif %}
                         <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Sprint Board</a></li>
-                        {% if sprint.status == 'stopped' or sprint.status == 'not_started' %}
+                        {% if sprint.status != 'active' %}
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item py-2 text-danger" href="{% url 'backlog:delete_sprint' sprint.id %}"><i class="bi bi-trash3 me-2 text-danger"></i>Delete Sprint</a></li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2 text-danger" data-bs-toggle="modal" data-bs-target="#deleteSprintModal{{ sprint.id }}">
+                                <i class="bi bi-trash3 me-2 text-danger"></i>Delete Sprint
+                            </button>
+                        </li>
                         {% endif %}
                     {% else %}
+                        {% if sprint.status not in 'completed stopped cancelled' %}
                         <li>
                             <button type="button" class="dropdown-item py-2 w-100 text-start" data-bs-toggle="modal" data-bs-target="#scrumMasterModal{{ sprint.id }}">
                                 <i class="bi bi-person-badge me-2 text-muted"></i>Select Scrum Master
@@ -38,6 +45,7 @@
                                 <i class="bi bi-person-check me-2 text-muted"></i>Select Product Owner
                             </button>
                         </li>
+                        {% endif %}
                         <li><a class="dropdown-item py-2" href="{% url 'backlog:sprint_board_detail' sprint.id %}"><i class="bi bi-kanban me-2 text-muted"></i>View Sprint Board</a></li>
                     {% endif %}
                 </ul>
@@ -50,12 +58,12 @@
         <div class="col-lg-7">
             <section class="detail-panel h-100" aria-labelledby="sprint-details-heading">
                 <h2 class="detail-panel-heading" id="sprint-details-heading">Sprint details</h2>
-                <div class="detail-field"><span class="detail-label">Start date:</span> {{ sprint.start_date|date:"j M Y"|default:"Not set" }}</div>
-                <div class="detail-field"><span class="detail-label">End date:</span> {{ sprint.end_date|date:"j M Y"|default:"Not set" }}</div>
+                <div class="detail-field"><span class="detail-label">Start date:</span> <span class="detail-value">{{ sprint.start_date|date:"j M Y"|default:"Not set" }}</span></div>
+                <div class="detail-field"><span class="detail-label">End date:</span> <span class="detail-value">{{ sprint.end_date|date:"j M Y"|default:"Not set" }}</span></div>
                 <div class="detail-field mt-3">
                     <span class="detail-label">Goal:</span>
                     {% if sprint.goal %}
-                        <p class="mb-0 mt-1">{{ sprint.goal|linebreaksbr }}</p>
+                        <p class="mb-0 mt-1 detail-value">{{ sprint.goal|linebreaksbr }}</p>
                     {% else %}
                         <p class="text-muted mb-0 mt-1">No goal set.</p>
                     {% endif %}
@@ -68,19 +76,23 @@
                 <h2 class="detail-panel-heading" id="sprint-team-heading">Sprint team</h2>
                 <div class="detail-field">
                     <span class="detail-label">Product Owner:</span>
+                    <span class="detail-value">
                     {% if sprint.product_owner %}
                         {{ sprint.product_owner.get_full_name|default:sprint.product_owner.username }}
                     {% else %}
                         Not assigned
                     {% endif %}
+                    </span>
                 </div>
                 <div class="detail-field">
                     <span class="detail-label">Scrum Master:</span>
+                    <span class="detail-value">
                     {% if sprint.scrum_master %}
                         {{ sprint.scrum_master.get_full_name|default:sprint.scrum_master.username }}
                     {% else %}
                         Not assigned
                     {% endif %}
+                    </span>
                 </div>
 
                 <h3 class="h6 fw-bold mt-3 mb-2">Team members</h3>
@@ -238,6 +250,37 @@
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 shadow-sm">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Sprint Modal -->
+<div class="modal fade" id="deleteSprintModal{{ sprint.id }}" tabindex="-1" aria-labelledby="deleteSprintModalLabel{{ sprint.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0 rounded-4">
+            <div class="modal-header border-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold text-dark fs-5" id="deleteSprintModalLabel{{ sprint.id }}">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Delete Sprint
+                </h5>
+                <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <p class="text-secondary mb-2">
+                    Are you sure you want to delete <strong class="text-dark">{{ sprint.name }}</strong>?
+                </p>
+                <p class="text-muted fs-7 mb-0">
+                    This sprint will be moved to the Deleted Sprints list. You can recover it later if needed.
+                </p>
+            </div>
+            <div class="modal-footer border-0 pt-2 pb-4 px-4 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'backlog:delete_sprint' sprint.id %}" method="POST" class="d-inline m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger rounded-pill px-3 shadow-sm">
+                        <i class="bi bi-trash3 me-1"></i>Delete Sprint
+                    </button>
                 </form>
             </div>
         </div>

@@ -35,12 +35,12 @@ def check_sprint_permission(sprint, user):
 
 
 @transaction.atomic
-def move_task(*, task_id, sprint_id, changed_by, assignee_action=None):
+def move_task(*, task_id, sprint_id, changed_by, assignee_action=None, new_assignee_id=None):
     """
     Move a task into an active Sprint or return it to the
     Product Backlog.
     If the task has an assignee who is not part of the target sprint team,
-    prompt for decision, add to sprint team, or clear assignee.
+    prompt for decision, add to sprint team, or clear assignee / choose from sprint team members.
     """
 
     task = (
@@ -69,23 +69,34 @@ def move_task(*, task_id, sprint_id, changed_by, assignee_action=None):
                 }
             ) from error
 
+    if task.status == 'completed':
+        raise ValidationError(
+            {
+                'task': (
+                    'A completed task cannot be moved.'
+                )
+            }
+        )
+
     if target_sprint is not None:
-        if target_sprint.status != 'active':
+        if target_sprint.status in ['stopped', 'cancelled', 'completed']:
+            status_display = 'Cancelled' if target_sprint.status in ['stopped', 'cancelled'] else 'Completed'
             raise ValidationError(
                 {
                     'sprint_id': (
-                        'Tasks can only be moved into an active Sprint.'
+                        f'Tasks cannot be moved into a {status_display} Sprint.'
                     )
                 }
             )
         check_sprint_permission(target_sprint, changed_by)
 
     if old_sprint:
-        if old_sprint.status == 'completed':
+        if old_sprint.status in ['completed', 'stopped', 'cancelled']:
+            status_display = 'Cancelled' if old_sprint.status in ['stopped', 'cancelled'] else 'Completed'
             raise ValidationError(
                 {
                     'task': (
-                        'Tasks cannot be moved out of a completed Sprint.'
+                        f'Tasks cannot be moved out of a {status_display} Sprint.'
                     )
                 }
             )
@@ -104,12 +115,21 @@ def move_task(*, task_id, sprint_id, changed_by, assignee_action=None):
         )
         if not is_member:
             if not assignee_action:
+                sprint_members = [
+                    {
+                        'id': m.id,
+                        'name': m.get_full_name() or m.username,
+                        'username': m.username,
+                    }
+                    for m in target_sprint.team_members.all().order_by('first_name', 'last_name', 'username')
+                ]
                 return task, False, {
                     'needs_assignee_decision': True,
                     'assignee_id': task.assignee.id,
                     'assignee_name': task.assignee.get_full_name() or task.assignee.username,
                     'sprint_id': target_sprint.id,
                     'sprint_name': target_sprint.name,
+                    'sprint_members': sprint_members,
                 }
             elif assignee_action == 'add_to_sprint':
                 target_sprint.team_members.add(task.assignee)
@@ -121,20 +141,29 @@ def move_task(*, task_id, sprint_id, changed_by, assignee_action=None):
                     description=f"{actor} added {assignee_name} to sprint team members",
                 )
                 extra_history_notes.append(f"added {assignee_name} to sprint team")
-            elif assignee_action in ['remove_assignee', 'clear']:
-                assignee_name = task.assignee.get_full_name() or task.assignee.username
-                task.assignee = None
-                extra_history_notes.append(f"cleared assignee {assignee_name}")
+            elif assignee_action in ['remove_assignee', 'reassign', 'clear']:
+                old_assignee_name = task.assignee.get_full_name() or task.assignee.username
+                if new_assignee_id:
+                    try:
+                        new_assignee = target_sprint.team_members.get(id=new_assignee_id)
+                        if new_assignee.is_staff or new_assignee.is_superuser:
+                            raise ValidationError({'assignee': 'Sprint tasks cannot be assigned to an administrator.'})
+                        task.assignee = new_assignee
+                        new_name = new_assignee.get_full_name() or new_assignee.username
+                        extra_history_notes.append(f"removed {old_assignee_name} and assigned to {new_name}")
+                    except target_sprint.team_members.model.DoesNotExist:
+                        raise ValidationError({'assignee': 'The selected assignee is not a member of this sprint.'})
+                else:
+                    task.assignee = None
+                    extra_history_notes.append(f"cleared assignee {old_assignee_name}")
 
     task.sprint = target_sprint
     
-    update_fields = ['sprint', 'updated_at']
+    update_fields = ['sprint', 'updated_at', 'assignee']
 
     if target_sprint is not None:
         task.status = 'not_started'
         update_fields.append('status')
-    if task.assignee is None:
-        update_fields.append('assignee')
 
     task.save(update_fields=list(set(update_fields)))
 
@@ -203,12 +232,31 @@ def change_sprint_task_status(
             }
         )
 
+    if task.sprint.status in ['completed', 'stopped', 'cancelled']:
+        status_display = 'cancelled' if task.sprint.status in ['stopped', 'cancelled'] else 'completed'
+        raise ValidationError(
+            {
+                'task': (
+                    f'Task status cannot be changed in a {status_display} Sprint.'
+                )
+            }
+        )
+
     if task.sprint.status != 'active':
         raise ValidationError(
             {
                 'task': (
                     'Task status can only be changed in '
                     'an active Sprint.'
+                )
+            }
+        )
+
+    if task.status == 'completed' and status != 'completed':
+        raise ValidationError(
+            {
+                'task': (
+                    'A completed task cannot change its status.'
                 )
             }
         )
@@ -310,7 +358,7 @@ def save_board_preference(
 
 
 @transaction.atomic
-def change_sprint_status(*, sprint_id, status):
+def change_sprint_status(*, sprint_id, status, changed_by=None):
     """
     Update Sprint status while enforcing the single-active-Sprint rule.
     """
@@ -341,13 +389,34 @@ def change_sprint_status(*, sprint_id, status):
             }
         )
 
-    if sprint.status == status:
+    if status == 'cancelled':
+        status = 'stopped'
+
+    current_status = 'stopped' if sprint.status == 'cancelled' else sprint.status
+    if current_status == status:
         return sprint, False
 
-    if status == 'stopped' and sprint.status != 'active':
+    if status == 'stopped' and current_status != 'active':
         raise ValidationError(
             {
-                'status': 'Only active sprints can be stopped.'
+                'status': 'Only active sprints can be cancelled.'
+            }
+        )
+
+    # AC: A completed or cancelled sprint cannot be changed anymore
+    if current_status in ['completed', 'stopped']:
+        status_display = 'cancelled' if current_status == 'stopped' else 'completed'
+        raise ValidationError(
+            {
+                'status': f'A {status_display} Sprint cannot be changed anymore.'
+            }
+        )
+
+    # AC: Once a sprint is started, it cannot be changed back to not started or planning
+    if current_status in ['active', 'stopped', 'completed'] and status in ['not_started', 'planning']:
+        raise ValidationError(
+            {
+                'status': 'A started sprint cannot be changed back to not started or planning.'
             }
         )
 
@@ -370,10 +439,22 @@ def change_sprint_status(*, sprint_id, status):
             )
 
     sprint.status = status
+    if changed_by is not None:
+        sprint._changed_by = changed_by
+    update_fields = ['status']
+
+    # AC: If by manual the sprint is set to cancelled or completed, change end date to current date
+    if status in ['stopped', 'completed']:
+        today = timezone.localdate()
+        sprint.end_date = today
+        update_fields.append('end_date')
+        if sprint.start_date and sprint.start_date > today:
+            sprint.start_date = today
+            update_fields.append('start_date')
 
     try:
         sprint.save(
-            update_fields=['status']
+            update_fields=update_fields
         )
     except IntegrityError as error:
         raise ValidationError(
@@ -487,3 +568,98 @@ def _work_session_interval_label(entry):
     start = timezone.localtime(entry.started_at).strftime("%Y-%m-%d %H:%M")
     end = timezone.localtime(entry.ended_at).strftime("%Y-%m-%d %H:%M")
     return f"{start} - {end} ({entry.duration_label})"
+
+
+def check_sprint_date_overlap(start_date, end_date, exclude_sprint_id=None):
+    """
+    Check if a given date range overlaps with any existing non-deleted sprint.
+    Two date ranges [S1, E1] and [S2, E2] overlap if S1 <= E2 and E1 >= S2.
+    Returns the first conflicting Sprint instance or None.
+    """
+    if not start_date or not end_date:
+        return None
+
+    qs = Sprint.objects.filter(
+        is_deleted=False,
+        start_date__isnull=False,
+        end_date__isnull=False,
+        start_date__lte=end_date,
+        end_date__gte=start_date,
+    )
+    if exclude_sprint_id:
+        qs = qs.exclude(pk=exclude_sprint_id)
+
+    return qs.first()
+
+
+def auto_update_sprint_statuses(reference_date=None):
+    """
+    Automatically updates sprint statuses based on dates:
+    1. Active sprints whose end date has arrived (today >= end_date) are completed.
+    2. Not started / planning sprints whose start date has arrived (today >= start_date)
+       are automatically started (or completed if today >= end_date as well),
+       respecting the single-active-sprint constraint.
+    """
+    today = reference_date or timezone.localdate()
+    updated_sprints = []
+
+    # Step 1: Auto-complete active sprints whose end date has arrived
+    active_to_complete = list(
+        Sprint.objects.filter(
+            is_deleted=False,
+            status='active',
+            end_date__isnull=False,
+            end_date__lte=today,
+        )
+    )
+    for sprint in active_to_complete:
+        sprint.status = 'completed'
+        sprint.save(update_fields=['status'])
+        SprintHistory.objects.create(
+            sprint=sprint,
+            changed_by=None,
+            description=f"Sprint automatically completed on end date {sprint.end_date}.",
+        )
+        updated_sprints.append(sprint)
+
+    # Step 2: Auto-start unstarted sprints whose start date has arrived
+    has_active = Sprint.objects.filter(is_deleted=False, status='active').exists()
+
+    candidates = list(
+        Sprint.objects.filter(
+            is_deleted=False,
+            status__in=['not_started', 'planning'],
+            start_date__isnull=False,
+            start_date__lte=today,
+        ).order_by('start_date', 'id')
+    )
+
+    for sprint in candidates:
+        if sprint.end_date and sprint.end_date <= today:
+            sprint.status = 'completed'
+            sprint.save(update_fields=['status'])
+            SprintHistory.objects.create(
+                sprint=sprint,
+                changed_by=None,
+                description=f"Sprint automatically completed on end date {sprint.end_date}.",
+            )
+            updated_sprints.append(sprint)
+        elif not has_active:
+            sprint.status = 'active'
+            sprint.save(update_fields=['status'])
+            SprintHistory.objects.create(
+                sprint=sprint,
+                changed_by=None,
+                description=f"Sprint automatically started on start date {sprint.start_date}.",
+            )
+            updated_sprints.append(sprint)
+            has_active = True
+
+    # Step 3: Ensure no incomplete tasks remain in stopped or completed sprints
+    inactive_sprints = Sprint.objects.filter(is_deleted=False, status__in=['stopped', 'cancelled', 'completed'])
+    for s in inactive_sprints:
+        if s.tasks.exclude(status='completed').exists():
+            s.return_incomplete_tasks_to_product_backlog(reason="completed" if s.status == 'completed' else "cancelled")
+
+    return updated_sprints
+

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" fill="none">
+    <defs>
+        <linearGradient id="synthGrid" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ec4899" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#a855f7" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.8"/>
+        </linearGradient>
+    </defs>
+    <!-- Wireframe Neon Mountains Ridge -->
+    <polygon points="140,48 165,16 190,48" stroke="#ec4899" stroke-width="1.8" fill="none"/>
+    <polygon points="165,16 195,48" stroke="#a855f7" stroke-width="1.2" fill="none"/>
+    <polygon points="180,48 205,24 230,48" stroke="#c084fc" stroke-width="1.6" fill="none"/>
+    <!-- Wireframe ridge ribs -->
+    <line x1="165" y1="16" x2="165" y2="48" stroke="#f43f5e" stroke-width="1" stroke-dasharray="2 2"/>
+    <line x1="152" y1="32" x2="178" y2="32" stroke="#a855f7" stroke-width="0.8"/>
+    <!-- Outrun horizontal laser horizon -->
+    <line x1="10" y1="48" x2="235" y2="48" stroke="url(#synthGrid)" stroke-width="2.5"/>
+    <line x1="15" y1="54" x2="230" y2="54" stroke="#c084fc" stroke-width="1.2" opacity="0.7"/>
+    <!-- Perspective grid beams -->
+    <line x1="70" y1="48" x2="50" y2="60" stroke="#ec4899" stroke-width="1" opacity="0.6"/>
+    <line x1="100" y1="48" x2="90" y2="60" stroke="#a855f7" stroke-width="1" opacity="0.6"/>
+    <line x1="130" y1="48" x2="128" y2="60" stroke="#c084fc" stroke-width="1" opacity="0.6"/>
+    <line x1="160" y1="48" x2="165" y2="60" stroke="#ec4899" stroke-width="1" opacity="0.6"/>
+    <!-- Floating 8-Bit Pixel Power-Up Stars & Gems -->
+    <!-- Star 1 -->
+    <g transform="translate(68, 20)">
+        <rect x="3" y="0" width="3" height="9" fill="#facc15"/>
+        <rect x="0" y="3" width="9" height="3" fill="#facc15"/>
+        <rect x="3" y="3" width="3" height="3" fill="#ffffff"/>
+    </g>
+    <!-- Pixel Gem -->
+    <g transform="translate(105, 16)">
+        <polygon points="6,0 12,5 6,14 0,5" fill="#38bdf8" stroke="#0ea5e9" stroke-width="0.8"/>
+        <polygon points="6,0 12,5 6,5" fill="#e0f2fe"/>
+    </g>
+    <!-- Synth level XP badge outline -->
+    <rect x="25" y="24" width="28" height="12" rx="3" fill="#140d24" stroke="#c084fc" stroke-width="1"/>
+    <text x="39" y="33" fill="#f3e8ff" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">LVL 1</text>
+</svg>

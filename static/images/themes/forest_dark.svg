@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="forestNightSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#020d07"/>
+      <stop offset="45%" stop-color="#051c11"/>
+      <stop offset="85%" stop-color="#0a2a1b"/>
+      <stop offset="100%" stop-color="#04120b"/>
+    </linearGradient>
+    <radialGradient id="emeraldMoon" cx="70%" cy="20%" r="35%">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.35"/>
+      <stop offset="30%" stop-color="#34d399" stop-opacity="0.2"/>
+      <stop offset="70%" stop-color="#059669" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#020d07" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="fireflyGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+
+  <!-- Sky Base -->
+  <rect width="1920" height="1080" fill="url(#forestNightSky)"/>
+  <circle cx="1340" cy="220" r="300" fill="url(#emeraldMoon)"/>
+
+  <!-- Crescent Mystical Golden-Emerald Moon Silhouette -->
+  <circle cx="1340" cy="220" r="65" fill="#fef08a" opacity="0.85"/>
+  <circle cx="1360" cy="205" r="58" fill="#051c11"/>
+
+  <!-- Layer 1: Distant Misty Pine Ridges -->
+  <path d="M-50,670 Q450,540 980,650 T2020,610 L2020,1100 L-50,1100 Z" fill="#061e12" opacity="0.6"/>
+
+  <!-- Layer 2: Midground Deep Nocturnal Pine Trees -->
+  <g fill="#072316">
+    <polygon points="100,560 70,640 130,640 60,700 140,700 100,780 100,1080"/>
+    <polygon points="260,510 220,600 300,600 210,670 310,670 260,760 260,1080"/>
+    <polygon points="440,550 410,630 470,630 400,690 480,690 440,770 440,1080"/>
+    <polygon points="630,500 590,590 670,590 580,660 680,660 630,750 630,1080"/>
+    <polygon points="830,540 800,620 860,620 790,680 870,680 830,760 830,1080"/>
+    <polygon points="1020,490 980,580 1060,580 970,650 1070,650 1020,740 1020,1080"/>
+    <polygon points="1220,530 1190,610 1250,610 1180,670 1260,670 1220,750 1220,1080"/>
+    <polygon points="1420,480 1380,570 1460,570 1370,640 1470,640 1420,730 1420,1080"/>
+    <polygon points="1620,520 1590,600 1650,600 1580,660 1660,660 1620,740 1620,1080"/>
+    <polygon points="1800,490 1760,580 1840,580 1750,650 1850,650 1800,740 1800,1080"/>
+  </g>
+
+  <!-- Layer 3: Foreground Dark Woods Silhouette -->
+  <path d="M-50,770 Q400,700 950,780 T2020,740 L2020,1100 L-50,1100 Z" fill="#030f07"/>
+
+  <!-- Bioluminescent Warm Amber & Gold Fireflies with Soft Radial Glow -->
+  <!-- Firefly 1 -->
+  <circle cx="280" cy="480" r="16" fill="#f59e0b" opacity="0.45" filter="url(#fireflyGlow)"/>
+  <circle cx="280" cy="480" r="4" fill="#fef08a"/>
+
+  <!-- Firefly 2 -->
+  <circle cx="590" cy="420" r="20" fill="#fbbf24" opacity="0.5" filter="url(#fireflyGlow)"/>
+  <circle cx="590" cy="420" r="5" fill="#ffffff"/>
+
+  <!-- Firefly 3 -->
+  <circle cx="890" cy="510" r="14" fill="#84cc16" opacity="0.4" filter="url(#fireflyGlow)"/>
+  <circle cx="890" cy="510" r="3.5" fill="#fef08a"/>
+
+  <!-- Firefly 4 -->
+  <circle cx="1180" cy="440" r="18" fill="#f59e0b" opacity="0.45" filter="url(#fireflyGlow)"/>
+  <circle cx="1180" cy="440" r="4.5" fill="#fef9c3"/>
+
+  <!-- Firefly 5 -->
+  <circle cx="1520" cy="490" r="16" fill="#fbbf24" opacity="0.45" filter="url(#fireflyGlow)"/>
+  <circle cx="1520" cy="490" r="4" fill="#fef08a"/>
+
+  <!-- Firefly 6 -->
+  <circle cx="1740" cy="410" r="14" fill="#a3e635" opacity="0.4" filter="url(#fireflyGlow)"/>
+  <circle cx="1740" cy="410" r="3.5" fill="#ffffff"/>
+
+  <!-- Distant Starlight -->
+  <circle cx="340" cy="180" r="1.5" fill="#ffffff" opacity="0.75"/>
+  <circle cx="680" cy="120" r="2" fill="#a7f3d0" opacity="0.8"/>
+  <circle cx="950" cy="200" r="1.5" fill="#ffffff" opacity="0.6"/>
+  <circle cx="1680" cy="140" r="2" fill="#a7f3d0" opacity="0.85"/>
+</svg>

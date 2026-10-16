@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from accounts.models import AccountSecurity
 from backlog.models import Sprint, Task, TaskHistory
 
 
@@ -15,6 +16,7 @@ class US23RecoveryTests(TestCase):
             is_staff=True,
             is_superuser=True,
         )
+        AccountSecurity.objects.filter(user=self.user).update(must_change_password=False)
 
         self.client.force_login(
             self.user
@@ -35,40 +37,31 @@ class US23RecoveryTests(TestCase):
         )
 
     def test_product_backlog_has_deleted_tasks_and_deleted_sprints_links(self):
+        # Product Backlog view has Deleted Tasks link
+        pb_response = self.client.get(
+            reverse("backlog:product_backlog_only")
+        )
+        self.assertEqual(pb_response.status_code, 200)
+        self.assertContains(pb_response, reverse("backlog:deleted_tasks"))
+        self.assertContains(pb_response, "Deleted Tasks")
+
+        # Sprint Board (/backlog/) has Deleted Sprints link, but no Deleted Tasks
         response = self.client.get(
-            reverse(
-                "backlog:product_backlog"
-            )
+            reverse("backlog:product_backlog")
         )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, reverse("backlog:deleted_tasks"))
+        self.assertNotContains(response, "Deleted Tasks")
+        self.assertContains(response, reverse("backlog:deleted_sprints"))
+        self.assertContains(response, "Deleted Sprints")
 
-        self.assertEqual(
-            response.status_code,
-            200,
+        # But in single sprint view, Deleted Sprints is removed
+        sprint_response = self.client.get(
+            reverse("backlog:sprint_backlog", args=[self.active_sprint.id])
         )
-
-        self.assertContains(
-            response,
-            reverse(
-                "backlog:deleted_tasks"
-            ),
-        )
-
-        self.assertContains(
-            response,
-            reverse(
-                "backlog:deleted_sprints"
-            ),
-        )
-
-        self.assertContains(
-            response,
-            "Deleted Tasks",
-        )
-
-        self.assertContains(
-            response,
-            "Deleted Sprints",
-        )
+        self.assertEqual(sprint_response.status_code, 200)
+        self.assertNotContains(sprint_response, "Deleted Tasks")
+        self.assertNotContains(sprint_response, "Deleted Sprints")
 
     def test_deleted_tasks_page_shows_required_table_information(self):
         response = self.client.get(
