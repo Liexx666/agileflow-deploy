@@ -17,8 +17,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom CSS -->
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=1.1">
-    <link rel="stylesheet" href="{% static 'css/themes.css' %}?v=1.1">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=1.2">
+    <link rel="stylesheet" href="{% static 'css/themes.css' %}?v=1.2">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -72,7 +72,7 @@
                 <!-- Backgrounds Selector Dropdown with Live Preview -->
                 <div class="dropdown me-1">
                     <button class="btn btn-backgrounds-menu shadow-sm" type="button" id="backgroundsDropdownBtn"
-                            data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Switch Theme Background">
+                            data-bs-toggle="dropdown" data-bs-display="static" data-bs-auto-close="outside" aria-expanded="false" title="Switch Theme Background">
                         <i class="bi bi-palette2 text-primary"></i>
                         <span class="d-none d-sm-inline ms-1">Backgrounds</span>
                     </button>
@@ -223,7 +223,8 @@
 
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/backlog.js' %}?v=20261015b"></script>
+    <script src="{% static 'js/touch_drag_drop.js' %}?v=1.0"></script>
+    <script src="{% static 'js/backlog.js' %}?v=20261015c"></script>
     <script>
         window.AGILEFLOW_THEME_UPDATE_URL = "{% url 'accounts:update_theme_preference' %}";
     </script>

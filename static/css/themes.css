@@ -1853,6 +1853,10 @@ body[data-mode="dark"] .detail-panel .badge.bg-secondary-subtle {
     color: var(--theme-text-main) !important;
 }
 
+.history-author {
+    color: var(--theme-text-muted) !important;
+}
+
 body[data-mode="dark"] .history-description {
     color: #f1f5f9 !important;
 }

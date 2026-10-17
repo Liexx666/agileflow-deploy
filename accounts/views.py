@@ -426,7 +426,9 @@ def _calculate_dashboard_metrics(start_date, end_date):
     total_days = max(1, (end_date - start_date).days + 1)
     tz = timezone.get_current_timezone()
     start_dt = timezone.make_aware(datetime.combine(start_date, dt_time.min), tz)
-    end_dt = timezone.make_aware(datetime.combine(end_date, dt_time.max), tz)
+    end_dt = timezone.make_aware(
+        datetime.combine(end_date + timedelta(days=1), dt_time.min), tz
+    )
 
     User = get_user_model()
     users = User.objects.filter(
@@ -435,8 +437,8 @@ def _calculate_dashboard_metrics(start_date, end_date):
     ).order_by("first_name", "last_name", "username")
 
     sessions = TaskWorkSession.objects.filter(
-        started_at__lte=end_dt,
-        ended_at__gte=start_dt
+        started_at__lt=end_dt,
+        ended_at__gt=start_dt
     ).select_related("user", "task")
 
     user_sessions_map = {u.pk: [] for u in users}
@@ -453,24 +455,26 @@ def _calculate_dashboard_metrics(start_date, end_date):
         daily_breakdown = {}
 
         for s in u_sessions:
-            s_start = max(s.started_at, start_dt)
-            s_end = min(s.ended_at, end_dt)
-            sec = max(0, int((s_end - s_start).total_seconds()))
-            total_seconds += sec
-
-            s_local_start = timezone.localtime(s.started_at)
-            s_date = s_local_start.date()
-            dur_hrs = round(sec / 3600.0, 2)
-            st_time = s_local_start.strftime("%I:%M %p")
-
-            if s_date not in daily_breakdown:
-                daily_breakdown[s_date] = {
-                    "date": s_date.strftime("%b %d"),
-                    "hours": dur_hrs,
-                    "startTime": st_time,
-                }
-            else:
-                daily_breakdown[s_date]["hours"] = round(daily_breakdown[s_date]["hours"] + dur_hrs, 2)
+            s_start = timezone.localtime(max(s.started_at, start_dt), tz)
+            s_end = timezone.localtime(min(s.ended_at, end_dt), tz)
+            while s_start < s_end:
+                s_date = s_start.date()
+                next_midnight = timezone.make_aware(
+                    datetime.combine(s_date + timedelta(days=1), dt_time.min), tz
+                )
+                segment_end = min(s_end, next_midnight)
+                seconds = max(0, int(segment_end.timestamp() - s_start.timestamp()))
+                total_seconds += seconds
+                entry = daily_breakdown.setdefault(s_date, {
+                    "seconds": 0,
+                    "started_at": s_start,
+                    "startTime": s_start.strftime("%I:%M %p"),
+                })
+                entry["seconds"] += seconds
+                if s_start < entry["started_at"]:
+                    entry["started_at"] = s_start
+                    entry["startTime"] = s_start.strftime("%I:%M %p")
+                s_start = segment_end
 
 
 
@@ -505,14 +509,16 @@ def _calculate_dashboard_metrics(start_date, end_date):
                 all_period_days.append({
                     "date": cur_day.strftime("%b %d"),
                     "isoDate": cur_day.strftime("%Y-%m-%d"),
-                    "hours": round(float(entry["hours"]), 2),
+                    "seconds": entry["seconds"],
+                    "hours": round(entry["seconds"] / 3600.0, 2),
                     "startTime": entry.get("startTime", "09:00 AM"),
-                    "hasWork": True,
+                    "hasWork": entry["seconds"] > 0,
                 })
             else:
                 all_period_days.append({
                     "date": cur_day.strftime("%b %d"),
                     "isoDate": cur_day.strftime("%Y-%m-%d"),
+                    "seconds": 0,
                     "hours": 0.0,
                     "startTime": "No work logged",
                     "hasWork": False,

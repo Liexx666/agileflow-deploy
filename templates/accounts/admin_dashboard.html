@@ -2513,14 +2513,16 @@ function initAdminDashboard() {
                           existingLogsMap.get(dateDisplayAlt.toLowerCase()) || 
                           null;
 
-            const hasWork = Boolean(match && Number(match.hours) > 0 && match.hasWork !== false);
-            const hours = hasWork ? Math.round(Number(match.hours) * 100) / 100 : 0.0;
+            const seconds = Math.max(0, Number(match && match.seconds) || 0);
+            const hasWork = Boolean(match && seconds > 0 && match.hasWork !== false);
+            const hours = seconds / 3600;
             const startTime = hasWork ? (match.startTime || "09:00 AM") : "No work logged";
 
             periodDaysList.push({
                 isoDate: iso,
                 date: dateDisplay,
                 fullDate: fullDateDisplay,
+                seconds: seconds,
                 hours: hours,
                 startTime: startTime,
                 hasWork: hasWork
@@ -2531,9 +2533,10 @@ function initAdminDashboard() {
 
         // Calculate statistics strictly across the ENTIRETY of the period
         const totalPeriodDays = Math.max(1, periodDaysList.length);
-        const totalHours = periodDaysList.reduce((acc, item) => acc + item.hours, 0);
+        const totalSeconds = periodDaysList.reduce((acc, item) => acc + item.seconds, 0);
+        const totalHours = totalSeconds / 3600;
         const avgHours = totalHours / totalPeriodDays;
-        const avgSeconds = Math.round(avgHours * 3600);
+        const avgSeconds = Math.floor(totalSeconds / totalPeriodDays);
         const avgH = Math.floor(avgSeconds / 3600);
         const avgM = Math.floor((avgSeconds % 3600) / 60);
         const avgS = avgSeconds % 60;

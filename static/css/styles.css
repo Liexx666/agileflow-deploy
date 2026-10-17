@@ -931,6 +931,21 @@ label:has(input:checked) {
     text-align: left;
 }
 
+.history-author {
+    color: #4b5563;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Sprint History Entries (Desktop 3-column grid vs Mobile column stack) */
+.sprint-history-entry {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) auto;
+    gap: 1.25rem;
+    align-items: center;
+}
+
 /* Detail page action buttons */
 .detail-actions {
     display: flex;
@@ -2204,6 +2219,11 @@ body.bg-light:has(.backlog-content)::after {
 
 /* 1. Global Touch & Viewport Handling */
 @media (max-width: 768px) {
+    /* Prevent horizontal viewport blowout on small screens */
+    html, body {
+        overflow-x: clip;
+    }
+
     /* Prevent iOS Safari auto-zoom on input focus */
     input[type="text"],
     input[type="search"],
@@ -2282,11 +2302,20 @@ body.bg-light:has(.backlog-content)::after {
     }
 
     .backgrounds-dropdown-panel {
-        width: calc(100vw - 16px) !important;
+        position: fixed !important;
+        top: 56px !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: auto !important;
+        width: auto !important;
         max-width: calc(100vw - 16px) !important;
-        right: -8px !important;
-        left: auto !important;
-        padding: 1rem !important;
+        max-height: calc(100vh - 70px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        transform: none !important;
+        margin: 0 !important;
+        padding: 0.85rem !important;
+        z-index: 1060 !important;
     }
 
     #profileDropdownMenu {
@@ -2330,7 +2359,7 @@ body.bg-light:has(.backlog-content)::after {
     }
 
     .sticky-task-card {
-        touch-action: pan-y;
+        touch-action: manipulation;
         padding: 0.85rem 0.95rem;
     }
 }
@@ -2530,5 +2559,51 @@ body.bg-light:has(.backlog-content)::after {
     .time-log-item button {
         align-self: flex-end;
     }
+
+    .sprint-history-entry {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.35rem !important;
+        padding-top: 0.65rem !important;
+        padding-bottom: 0.65rem !important;
+    }
+
+    .sprint-history-entry .history-timestamp,
+    .sprint-history-entry .history-author {
+        white-space: normal !important;
+        text-align: left !important;
+    }
+
+    .sprint-history-entry .history-description {
+        width: 100% !important;
+        word-break: break-word !important;
+    }
+}
+
+/* 8. Touch Drag & Drop Visual Styles (Phones & Tablets) */
+.touch-drag-ghost {
+    position: fixed !important;
+    pointer-events: none !important;
+    z-index: 100000 !important;
+    opacity: 0.94 !important;
+    transform-origin: center center !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 8px !important;
+    margin: 0 !important;
+    transition: transform 0.04s ease-out !important;
+    will-change: transform !important;
+}
+
+.touch-drag-source {
+    opacity: 0.38 !important;
+    filter: grayscale(15%) !important;
+    transition: opacity 0.15s ease !important;
+}
+
+.touch-dragging-active,
+.touch-dragging-active * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 

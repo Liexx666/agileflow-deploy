@@ -181,14 +181,14 @@
     <section class="detail-panel" aria-labelledby="sprint-history-heading">
         <h2 class="detail-panel-heading" id="sprint-history-heading"><i class="bi bi-journal-text me-2 text-secondary"></i>History</h2>
         {% for entry in history %}
-        <div class="history-entry position-relative ps-3 py-2 border-bottom d-grid align-items-center" style="grid-template-columns: 220px 1fr auto; gap: 1.5rem; border-left: 2px solid #cbd5e1;">
-            <div class="history-timestamp text-muted fs-8 text-nowrap text-start">
+        <div class="history-entry sprint-history-entry position-relative ps-3 py-2 border-bottom">
+            <div class="history-timestamp text-muted fs-8 text-start">
                 <i class="bi bi-calendar3 me-1"></i>{{ entry.timestamp|date:"j M Y, g:i A" }}
             </div>
-            <div class="history-description text-dark fw-medium fs-7 text-start" style="text-align: left !important;">
+            <div class="history-description fw-medium fs-7 text-start">
                 {{ entry.description }}
             </div>
-            <div class="history-author text-muted fs-8 text-nowrap text-end">
+            <div class="history-author text-muted fs-8 text-start text-md-end">
                 {% if entry.changed_by %}
                     <i class="bi bi-person me-1"></i>Author: {{ entry.changed_by.get_full_name|default:entry.changed_by.username }}
                 {% endif %}

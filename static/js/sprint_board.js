@@ -27,23 +27,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function bindTaskEvents(taskItem) {
         const card = taskItem.querySelector('.sticky-task-card');
-        if (!card || !card.draggable || card.dataset.status === 'completed') return;
+        const isCardDraggable = card && (card.draggable || card.getAttribute('draggable') === 'true');
+        if (!card || !isCardDraggable || card.dataset.status === 'completed') return;
 
-        taskItem.addEventListener('dragstart', (e) => {
+        const handleDragStart = (e) => {
             draggedItem = taskItem;
             originZone = taskItem.closest('.kanban-tasks-container');
-            e.dataTransfer.setData('text/plain', card.dataset.taskId);
-            e.dataTransfer.effectAllowed = 'move';
+            if (e.dataTransfer) {
+                e.dataTransfer.setData('text/plain', card.dataset.taskId);
+                e.dataTransfer.effectAllowed = 'move';
+            }
             // Delay adding class so the drag ghost renders cleanly
             requestAnimationFrame(() => card.classList.add('dragging'));
-        });
+        };
 
-        taskItem.addEventListener('dragend', () => {
+        const handleDragEnd = () => {
             card.classList.remove('dragging');
             draggedItem = null;
             originZone = null;
             document.querySelectorAll('.kanban-tasks-container').forEach(z => z.classList.remove('drag-over'));
-        });
+        };
+
+        taskItem.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragstart', handleDragStart);
+
+        taskItem.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragend', handleDragEnd);
     }
 
     // Bind existing task items
